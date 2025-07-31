@@ -1,1 +1,38 @@
-33
+Chapter 1: The Bug That Changed Everything
+
+Lena stared at her screen, the glow of VS Code reflecting in her tired eyes. It was 2:37 AM, and her latest commit had just broken the production API. Slack exploded with alerts:
+
+    @team: WHO THE HELL MERGED "FIX-TYPO" TO MAIN?!
+
+She wiped her coffee-stained hoodie sleeve across her forehead. That "typo fix" was supposed to be harmless—a single missing semicolon. But somewhere between her local branch and GitHub Actions, it had spiraled into a cascading 500-error nightmare.
+Chapter 1: The Bug That Changed Everything
+
+Lena stared at her screen, the glow of VS Code reflecting in her tired eyes. It was 2:37 AM, and her latest commit had just broken the production API. Slack exploded with alerts:
+
+    @team: WHO THE HELL MERGED "FIX-TYPO" TO MAIN?!
+
+She wiped her coffee-stained hoodie sleeve across her forehead. That "typo fix" was supposed to be harmless—a single missing semicolon. But somewhere between her local branch and GitHub Actions, it had spiraled into a cascading 500-error nightmare.Chapter 1: The Bug That Changed Everything
+
+Lena stared at her screen, the glow of VS Code reflecting in her tired eyes. It was 2:37 AM, and her latest commit had just broken the production API. Slack exploded with alerts:
+
+    @team: WHO THE HELL MERGED "FIX-TYPO" TO MAIN?!
+
+She wiped her coffee-stained hoodie sleeve across her forehead. That "typo fix" was supposed to be harmless—a single missing semicolon. But somewhere between her local branch and GitHub Actions, it had spiraled into a cascading 500-error nightmare.Chapter 1: The Bug That Changed Everything
+
+Lena stared at her screen, the glow of VS Code reflecting in her tired eyes. It was 2:37 AM, and her latest commit had just broken the production API. Slack exploded with alerts:
+
+    @team: WHO THE HELL MERGED "FIX-TYPO" TO MAIN?!
+
+She wiped her coffee-stained hoodie sleeve across her forehead. That "typo fix" was supposed to be harmless—a single missing semicolon. But somewhere between her local branch and GitHub Actions, it had spiraled into a cascading 500-error nightmare.Chapter 1: The Bug That Changed Everything
+
+Lena stared at her screen, the glow of VS Code reflecting in her tired eyes. It was 2:37 AM, and her latest commit had just broken the production API. Slack exploded with alerts:
+
+    @team: WHO THE HELL MERGED "FIX-TYPO" TO MAIN?!
+
+She wiped her coffee-stained hoodie sleeve across her forehead. That "typo fix" was supposed to be harmless—a single missing semicolon. But somewhere between her local branch and GitHub Actions, it had spiraled into a cascading 500-error nightmare.Chapter 1: The Bug That Changed Everything
+
+Lena stared at her screen, the glow of VS Code reflecting in her tired eyes. It was 2:37 AM, and her latest commit had just broken the production API. Slack exploded with alerts:
+
+    @team: WHO THE HELL MERGED "FIX-TYPO" TO MAIN?!
+
+She wiped her coffee-stained hoodie sleeve across her forehead. That "typo fix" was supposed to be harmless—a single missing semicolon. But somewhere between her local branch and GitHub Actions, it had spiraled into a cascading 500-error nightmare.
