@@ -77,13 +77,11 @@ The user says: "${userInput}"
   }
 
   context += `Please provide a helpful response and create/modify action steps for this task. 
-IMPORTANT: If you need more details to create proper steps, ask clarifying questions first before providing steps, but  also make reasonable assumptions.
 
 Format your response as follows:
 
 1. First, provide a helpful response to the user's input
-2. If you need more information, ask specific clarifying questions
-3. If you have enough information, provide a list of action steps in this exact format:
+2. If you have enough information, provide a list of action steps in this exact format:
    STEPS_START
    - [Step description 1]
    - [Step description 2]
@@ -97,7 +95,9 @@ Important rules:
 - Create 3-7 steps depending on complexity
 - Make steps sequential and logical
 - Each step should be a single actionable item
-- If you're asking questions, don't provide steps yet`;
+- If you're asking general questions, don't provide steps yet
+- format your response with bullet points if needed
+- make reasonable assumptions if information is missing`;
 
   return context;
 }

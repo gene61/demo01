@@ -187,6 +187,57 @@ export default function TaskDetail() {
     updateTask({ ...task, steps: updatedSteps });
   };
 
+  // Simple markdown renderer
+  const renderMarkdown = (text: string) => {
+    if (!text) return '';
+    
+    // Check if this is a step generation response (contains STEPS_START/STEPS_END)
+    if (text.includes('STEPS_START') && text.includes('STEPS_END')) {
+      // For step generation responses, don't apply markdown to the steps section
+      const parts = text.split(/(STEPS_START[\s\S]*?STEPS_END)/);
+      return (
+        <div>
+          {parts.map((part, index) => {
+            if (part.includes('STEPS_START')) {
+              // Keep steps section as plain text for proper parsing
+              return <pre key={index} className="whitespace-pre-wrap bg-gray-100 p-2 rounded text-sm">{part}</pre>;
+            } else {
+              // Apply markdown to the rest of the text
+              return <div key={index} dangerouslySetInnerHTML={{ __html: applyMarkdown(part) }} />;
+            }
+          })}
+        </div>
+      );
+    }
+    
+    // Regular markdown rendering for non-step responses
+    return <div dangerouslySetInnerHTML={{ __html: applyMarkdown(text) }} />;
+  };
+
+  // Helper function to apply markdown transformations
+  const applyMarkdown = (text: string) => {
+    if (!text) return '';
+    
+    return text
+      // Headers
+      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-2 mb-1">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mt-3 mb-2">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-4 mb-3">$1</h1>')
+      // Bold and italic
+      .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold">$1</strong>')
+      .replace(/\*(.*?)\*/gim, '<em class="italic">$1</em>')
+      // Lists (only for non-step content)
+      .replace(/^- (.*$)/gim, '<li class="ml-4">$1</li>')
+      .replace(/(<li.*<\/li>)/gim, '<ul class="list-disc ml-4 space-y-1">$1</ul>')
+      // Code blocks
+      .replace(/```([^`]+)```/gim, '<pre class="bg-gray-100 p-2 rounded text-sm overflow-x-auto"><code>$1</code></pre>')
+      .replace(/`([^`]+)`/gim, '<code class="bg-gray-100 px-1 rounded text-sm">$1</code>')
+      // Line breaks
+      .replace(/\n/gim, '<br>')
+      // Links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" class="text-blue-500 hover:text-blue-700 underline" target="_blank" rel="noopener noreferrer">$1</a>');
+  };
+
   if (!task) {
     return (
       <div className="min-h-screen animated-gradient flex items-center justify-center">
@@ -258,7 +309,13 @@ export default function TaskDetail() {
                           : 'bg-purple-50 text-purple-800'
                       }`}
                     >
-                      {message}
+                      {message.startsWith('User:') ? (
+                        <div>{message}</div>
+                      ) : (
+                        <div className="prose prose-sm max-w-none">
+                          {renderMarkdown(message.replace('AI: ', ''))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
