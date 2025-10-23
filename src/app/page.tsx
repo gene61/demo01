@@ -10,7 +10,7 @@ interface Todo {
 }
 
 // Set your password here - change this to whatever you want
-const APP_PASSWORD = 'mypassword123';
+const APP_PASSWORD = '61';
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
