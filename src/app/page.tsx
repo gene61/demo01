@@ -110,7 +110,7 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4">
+      <div className="min-h-screen animated-gradient flex items-center justify-center py-8 px-4">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-lg shadow-md p-8">
             <div className="text-center mb-6">
@@ -142,7 +142,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen animated-gradient py-8 px-4">
       <div className="max-w-md mx-auto">
         {/* Header with Logout */}
         <div className="text-center mb-8">
@@ -225,7 +225,7 @@ export default function Home() {
                   >
                     {todo.text}
                   </span>
-                  <div className="flex gap-4">
+                  <div className="flex gap-10">
                     <button
                       onClick={() => router.push(`/task/${todo.id}`)}
                       className="text-green-500 hover:text-green-700 p-1 rounded-full hover:bg-green-50 transition-colors"
