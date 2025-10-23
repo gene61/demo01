@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,17 +16,18 @@ export const metadata: Metadata = {
   title: "Todo List App",
   description: "A simple and elegant todo list application",
   manifest: "/manifest.json",
-  themeColor: "#3b82f6",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Todo List App",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#3b82f6",
 };
 
 export default function RootLayout({
