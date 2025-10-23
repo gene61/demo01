@@ -96,6 +96,7 @@ Rules:
 }
 
 async function callDeepSeekAPI(apiKey: string, context: string): Promise<string> {
+  // Optimize for speed - focus on step generation only
   const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -107,20 +108,27 @@ async function callDeepSeekAPI(apiKey: string, context: string): Promise<string>
       messages: [
         {
           role: 'system',
-          content: 'You are a task planning assistant. Generate direct action steps without asking questions.'
+          content: 'You are a task planning assistant. Focus on creating actionable steps without asking questions. Be concise and direct.'
         },
         {
           role: 'user',
           content: context
         }
       ],
-      max_tokens: 800,
-      temperature: 0.7
+      max_tokens: 600, // Reduced for faster step generation
+      temperature: 0.3, // Lower temperature for more consistent step generation
+      stream: false
     })
   });
 
   if (!response.ok) {
-    throw new Error(`DeepSeek API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('DeepSeek API error:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText
+    });
+    throw new Error(`DeepSeek API error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
