@@ -77,7 +77,7 @@ The user says: "${userInput}"
   }
 
   context += `Please provide a helpful response and create/modify action steps for this task. 
-IMPORTANT: If you need more details to create proper steps, ask clarifying questions first before providing steps.
+IMPORTANT: If you need more details to create proper steps, ask clarifying questions first before providing steps, but  also make reasonable assumptions.
 
 Format your response as follows:
 
