@@ -47,6 +47,8 @@ This app is a Progressive Web App with:
 
 ## Deployment
 
+
+
 ### Deploy on Vercel
 
 The easiest way to deploy this app is using [Vercel](https://vercel.com):
