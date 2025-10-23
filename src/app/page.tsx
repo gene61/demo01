@@ -9,22 +9,56 @@ interface Todo {
   createdAt: Date;
 }
 
+// Set your password here - change this to whatever you want
+const APP_PASSWORD = 'mypassword123';
+
 export default function Home() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
   const [todos, setTodos] = useState<Todo[]>([]);
   const [inputValue, setInputValue] = useState('');
 
-  // Load todos from localStorage on component mount
+  // Check if already authenticated on component mount
   useEffect(() => {
-    const savedTodos = localStorage.getItem('todos');
-    if (savedTodos) {
-      setTodos(JSON.parse(savedTodos));
+    const authStatus = localStorage.getItem('isAuthenticated');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
     }
   }, []);
 
+  // Load todos from localStorage on authentication
+  useEffect(() => {
+    if (isAuthenticated) {
+      const savedTodos = localStorage.getItem('todos');
+      if (savedTodos) {
+        setTodos(JSON.parse(savedTodos));
+      }
+    }
+  }, [isAuthenticated]);
+
   // Save todos to localStorage whenever todos change
   useEffect(() => {
-    localStorage.setItem('todos', JSON.stringify(todos));
-  }, [todos]);
+    if (isAuthenticated) {
+      localStorage.setItem('todos', JSON.stringify(todos));
+    }
+  }, [todos, isAuthenticated]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === APP_PASSWORD) {
+      setIsAuthenticated(true);
+      localStorage.setItem('isAuthenticated', 'true');
+    } else {
+      alert('Incorrect password. Please try again.');
+      setPassword('');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAuthenticated');
+    setPassword('');
+  };
 
   const addTodo = () => {
     if (inputValue.trim() !== '') {
@@ -62,12 +96,53 @@ export default function Home() {
   const completedCount = todos.filter(todo => todo.completed).length;
   const totalCount = todos.length;
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Private Todo List</h1>
+              <p className="text-gray-600">Enter password to access</p>
+            </div>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                Access Todo List
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-md mx-auto">
-        {/* Header */}
+        {/* Header with Logout */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Todo List</h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-4xl font-bold text-gray-800">Todo List</h1>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          </div>
           <p className="text-gray-600">Stay organized and productive</p>
         </div>
 
