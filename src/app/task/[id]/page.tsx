@@ -1,0 +1,390 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+
+interface TaskStep {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+  createdAt: Date;
+  steps: TaskStep[];
+  aiChatHistory: string[];
+}
+
+export default function TaskDetail() {
+  const params = useParams();
+  const router = useRouter();
+  const [task, setTask] = useState<Task | null>(null);
+  const [aiInput, setAiInput] = useState('');
+  const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
+  const [showGenerateStepsModal, setShowGenerateStepsModal] = useState(false);
+  const [generateStepsInput, setGenerateStepsInput] = useState('');
+  const chatHistoryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (params.id) {
+      const savedTasks = localStorage.getItem('todos');
+      if (savedTasks) {
+        const tasks: Task[] = JSON.parse(savedTasks);
+        const foundTask = tasks.find(t => t.id === params.id);
+        if (foundTask) {
+          // Ensure the task has the new properties
+          const enhancedTask: Task = {
+            ...foundTask,
+            steps: foundTask.steps || [],
+            aiChatHistory: foundTask.aiChatHistory || []
+          };
+          setTask(enhancedTask);
+        }
+      }
+    }
+  }, [params.id]);
+
+  // Auto-scroll chat history to bottom when new messages are added
+  useEffect(() => {
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  }, [task?.aiChatHistory]);
+
+  const updateTask = (updatedTask: Task) => {
+    const savedTasks = localStorage.getItem('todos');
+    if (savedTasks) {
+      const tasks: Task[] = JSON.parse(savedTasks);
+      const updatedTasks = tasks.map(t => t.id === updatedTask.id ? updatedTask : t);
+      localStorage.setItem('todos', JSON.stringify(updatedTasks));
+      setTask(updatedTask);
+    }
+  };
+
+  const toggleStep = (stepId: string) => {
+    if (!task) return;
+    
+    const updatedSteps = task.steps.map(step =>
+      step.id === stepId ? { ...step, completed: !step.completed } : step
+    );
+    
+    updateTask({ ...task, steps: updatedSteps });
+  };
+
+  const generateStepsWithAI = async () => {
+    if (!task || !aiInput.trim()) return;
+    
+    setIsGeneratingSteps(true);
+    
+    try {
+      const response = await fetch('/api/ai-assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          task: task.text,
+          userInput: aiInput,
+          existingSteps: task.steps,
+          chatHistory: task.aiChatHistory
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate steps');
+      }
+
+      const data = await response.json();
+      
+      // Update task with new steps and chat history
+      const updatedTask: Task = {
+        ...task,
+        steps: data.steps,
+        aiChatHistory: [...task.aiChatHistory, `User: ${aiInput}`, `AI: ${data.response}`]
+      };
+      
+      updateTask(updatedTask);
+      setAiInput('');
+    } catch (error) {
+      console.error('Error generating steps:', error);
+      alert('Failed to generate steps. Please try again.');
+    } finally {
+      setIsGeneratingSteps(false);
+    }
+  };
+
+  const openGenerateStepsModal = () => {
+    setShowGenerateStepsModal(true);
+    setGenerateStepsInput('');
+  };
+
+  const closeGenerateStepsModal = () => {
+    setShowGenerateStepsModal(false);
+    setGenerateStepsInput('');
+  };
+
+  const generateStepsFromChatHistory = async (userInput?: string) => {
+    if (!task || task.aiChatHistory.length === 0) return;
+    
+    setIsGeneratingSteps(true);
+    
+    try {
+      const response = await fetch('/api/ai-assistant/generate-steps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          task: task.text,
+          userInput: userInput || '',
+          existingSteps: task.steps,
+          chatHistory: task.aiChatHistory
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate steps');
+      }
+
+      const data = await response.json();
+      
+      // Update task with new steps and chat history
+      const userMessage = userInput 
+        ? `Generate steps with additional input: ${userInput}`
+        : 'Generate steps from chat history';
+      
+      const updatedTask: Task = {
+        ...task,
+        steps: data.steps,
+        aiChatHistory: [...task.aiChatHistory, `User: ${userMessage}`, `AI: Generated ${data.steps.length} action steps`]
+      };
+      
+      updateTask(updatedTask);
+      closeGenerateStepsModal();
+    } catch (error) {
+      console.error('Error generating steps from chat history:', error);
+      alert('Failed to generate steps. Please try again.');
+    } finally {
+      setIsGeneratingSteps(false);
+    }
+  };
+
+  const handleGenerateStepsSubmit = () => {
+    if (generateStepsInput.trim()) {
+      generateStepsFromChatHistory(generateStepsInput);
+    } else {
+      generateStepsFromChatHistory();
+    }
+  };
+
+  const deleteStep = (stepId: string) => {
+    if (!task) return;
+    
+    const updatedSteps = task.steps.filter(step => step.id !== stepId);
+    updateTask({ ...task, steps: updatedSteps });
+  };
+
+  if (!task) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔍</div>
+          <p className="text-gray-600">Task not found</p>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+          <h1 className="text-3xl font-bold text-gray-800">Task Details</h1>
+          <div className="w-20"></div> {/* Spacer for alignment */}
+        </div>
+
+        {/* Task Info */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">{task.text}</h2>
+          <p className="text-gray-600 text-sm">
+            Created: {new Date(task.createdAt).toLocaleDateString()}
+          </p>
+          <div className={`inline-block px-3 py-1 rounded-full text-sm mt-2 ${
+            task.completed 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-yellow-100 text-yellow-800'
+          }`}>
+            {task.completed ? 'Completed' : 'In Progress'}
+          </div>
+        </div>
+
+        {/* AI Assistant Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">AI Assistant</h3>
+          <div className="space-y-4">
+            {/* Chat History */}
+            {task.aiChatHistory.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Chat History (Last 10 messages)</h4>
+                <div 
+                  ref={chatHistoryRef}
+                  className="space-y-2 max-h-80 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50"
+                >
+                  {task.aiChatHistory.slice(-10).map((message, index) => (
+                    <div
+                      key={index}
+                      className={`text-sm p-2 rounded ${
+                        message.startsWith('User:') 
+                          ? 'bg-blue-50 text-blue-800' 
+                          : 'bg-purple-50 text-purple-800'
+                      }`}
+                    >
+                      {message}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Chat Input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                placeholder="Ask AI to create or update steps..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !isGeneratingSteps) {
+                    generateStepsWithAI();
+                  }
+                }}
+              />
+              <button
+                onClick={generateStepsWithAI}
+                disabled={isGeneratingSteps || !aiInput.trim()}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isGeneratingSteps ? 'Generating...' : 'Ask AI'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Steps Section */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Action Steps</h3>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-500">
+                {task.steps.filter(s => s.completed).length} of {task.steps.length} completed
+              </span>
+              {task.aiChatHistory.length > 0 && (
+                <button
+                  onClick={openGenerateStepsModal}
+                  disabled={isGeneratingSteps}
+                  className="px-3 py-1 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isGeneratingSteps ? 'Generating...' : 'Generate Steps'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {task.steps.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-2">📋</div>
+              <p>No steps yet. Use the AI assistant above to generate steps!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {task.steps.map((step) => (
+                <div
+                  key={step.id}
+                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={step.completed}
+                    onChange={() => toggleStep(step.id)}
+                    className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
+                  />
+                  <span
+                    className={`flex-1 text-sm ${
+                      step.completed
+                        ? 'line-through text-gray-400'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    {step.text}
+                  </span>
+                  <button
+                    onClick={() => deleteStep(step.id)}
+                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Generate Steps Modal */}
+      {showGenerateStepsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Generate Action Steps</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Provide additional context or requirements for the steps (optional):
+            </p>
+            <textarea
+              value={generateStepsInput}
+              onChange={(e) => setGenerateStepsInput(e.target.value)}
+              placeholder="E.g., Focus on technical aspects, include testing phase, make steps more detailed..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={3}
+            />
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={closeGenerateStepsModal}
+                className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleGenerateStepsSubmit}
+                disabled={isGeneratingSteps}
+                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isGeneratingSteps ? 'Generating...' : 'Generate Steps'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
