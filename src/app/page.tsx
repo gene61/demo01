@@ -1,18 +1,28 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface TaskStep {
+  id: string;
+  text: string;
+  completed: boolean;
+}
 
 interface Todo {
   id: string;
   text: string;
   completed: boolean;
   createdAt: Date;
+  steps: TaskStep[];
+  aiChatHistory: string[];
 }
 
 // Set your password here - change this to whatever you want
 const APP_PASSWORD = '61';
 
 export default function Home() {
+  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -67,6 +77,8 @@ export default function Home() {
         text: inputValue.trim(),
         completed: false,
         createdAt: new Date(),
+        steps: [],
+        aiChatHistory: []
       };
       setTodos([...todos, newTodo]);
       setInputValue('');
@@ -213,24 +225,45 @@ export default function Home() {
                   >
                     {todo.text}
                   </span>
-                  <button
-                    onClick={() => deleteTodo(todo.id)}
-                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => router.push(`/task/${todo.id}`)}
+                      className="text-green-500 hover:text-green-700 p-1 rounded-full hover:bg-green-50 transition-colors"
+                      title="View Details"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => deleteTodo(todo.id)}
+                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
