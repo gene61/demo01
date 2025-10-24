@@ -3,23 +3,33 @@ import { NextRequest, NextResponse } from 'next/server';
 // Web Push library for sending notifications
 const webpush = require('web-push');
 
-// Configure web push only if VAPID keys are available
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+// VAPID configuration will be set inside the function when needed
+let vapidConfigured = false;
 
-if (vapidPublicKey && vapidPrivateKey) {
-  try {
-    webpush.setVapidDetails(
-      'mailto:your-email@example.com',
-      vapidPublicKey,
-      vapidPrivateKey
-    );
-  } catch (error) {
-    console.warn('Failed to set VAPID details:', error);
+const configureVapid = () => {
+  if (vapidConfigured) return true;
+  
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (vapidPublicKey && vapidPrivateKey) {
+    try {
+      webpush.setVapidDetails(
+        'mailto:your-email@example.com',
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      vapidConfigured = true;
+      return true;
+    } catch (error) {
+      console.warn('Failed to set VAPID details:', error);
+      return false;
+    }
+  } else {
+    console.warn('VAPID keys not configured. Push notifications will not work.');
+    return false;
   }
-} else {
-  console.warn('VAPID keys not configured. Push notifications will not work.');
-}
+};
 
 // Mock subscriptions store (in production, use a database)
 const subscriptions = new Map();
@@ -55,6 +65,12 @@ export async function POST(request: NextRequest) {
         // Send notification to all subscribers
         for (const subscription of subscriptions.values()) {
           try {
+            // Configure VAPID only when actually sending notifications
+            if (!configureVapid()) {
+              console.warn('Skipping notification - VAPID not configured');
+              continue;
+            }
+
             const payload = JSON.stringify({
               title: '⏰ Task Deadline Approaching',
               body: `"${todo.text}" is due in ${timeUntilDeadline} minutes`,
@@ -84,6 +100,12 @@ export async function POST(request: NextRequest) {
       if (deadline <= now && !todo.completed) {
         for (const subscription of subscriptions.values()) {
           try {
+            // Configure VAPID only when actually sending notifications
+            if (!configureVapid()) {
+              console.warn('Skipping overdue notification - VAPID not configured');
+              continue;
+            }
+
             const payload = JSON.stringify({
               title: '⚠️ Task Overdue',
               body: `"${todo.text}" is overdue!`,
