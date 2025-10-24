@@ -9,11 +9,11 @@ const vapidPrivateKey = 'IimaanQvbkd59Hgp4WFPWFJKHpTd1jLiBvwXO3bXEgo';
 
 // Your subscription data
 const subscription = {
-  endpoint: 'https://jmt17.google.com/fcm/send/fCUDRc6Q8hQ:APA91bEdQHHqYmQFUDGuFojzXGFe2S1MdpRG_7LOs08Zd6PTzurrOFZG6KUEOnJzuLFuE8YfbqFrzXKwYdWlcTKG-pSnNRHQV3NMgyFmHEI2untq56gZj3P4Ro3ZtyWlfeI3pvieQE4n',
-  expirationTime: null,
-  keys: {
-    p256dh: 'BFvNzM0FPF3E7fwXTUXt-G1v4fSGAKwfH2kRkVlE8dOKWM52QB9K2vIpEbAEdfl3gu5cq_7XAprxNJhr4poCbs8',
-    auth: 't_ot5Nw1Vn562d56J-hpVw'
+  "endpoint": "https://jmt17.google.com/fcm/send/e1BXGu0Ousc:APA91bHTOw3je-HSMgmrBKd3uHmW_JOBHKMDuUuEDVZThhlKXF9af8Svn6U6gQs3d0cmclKMs3UfofFxuOxVZIuWtJtWreEmTn9JNkwu-bEskIc8fvXppereQAvoM3Op0Uu9E-HM2rCW",
+  "expirationTime": null,
+  "keys": {
+    "p256dh": "BDZ8aqrjiyL90UJjSzgwBTGNpegnE9IzASZRd0fGd1o4gtyIVNix4lvLBRHUu5uGu7dFxp9wtAXhEM8lAVxF85A",
+    "auth": "dEtL76naQ2wvRXO9--89Zg"
   }
 };
 

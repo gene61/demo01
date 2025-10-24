@@ -36,9 +36,17 @@ const configureVapid = () => {
 // In production, use a database like Redis, PostgreSQL, or Vercel KV
 const todosStore = new Map();
 
-// Import the shared subscriptions store from the subscribe endpoint
-// This ensures both endpoints use the same subscription data
-import { subscriptions } from '../subscribe/route';
+// Hardcoded subscription for testing - replace with your actual subscription
+const hardcodedSubscriptions = [
+  {
+    endpoint: 'https://jmt17.google.com/fcm/send/fCUDRc6Q8hQ:APA91bEdQHHqYmQFUDGuFojzXGFe2S1MdpRG_7LOs08Zd6PTzurrOFZG6KUEOnJzuLFuE8YfbqFrzXKwYdWlcTKG-pSnNRHQV3NMgyFmHEI2untq56gZj3P4Ro3ZtyWlfeI3pvieQE4n',
+    expirationTime: null,
+    keys: {
+      p256dh: 'BFvNzM0FPF3E7fwXTUXt-G1v4fSGAKwfH2kRkVlE8dOKWM52QB9K2vIpEbAEdfl3gu5cq_7XAprxNJhr4poCbs8',
+      auth: 't_ot5Nw1Vn562d56J-hpVw'
+    }
+  }
+];
 
 // Helper functions
 const getUpcomingDeadlines = async () => {
@@ -86,9 +94,8 @@ const getOverdueDeadlines = async () => {
 
 const getSubscribedUsers = async () => {
   console.log('🔔 Step 2: Getting subscribed users');
-  const subscribers = Array.from(subscriptions.values());
-  console.log(`Found ${subscribers.length} subscribers`);
-  return subscribers;
+  console.log(`Found ${hardcodedSubscriptions.length} hardcoded subscribers`);
+  return hardcodedSubscriptions;
 };
 
 const sendPushNotification = async (subscription: any, title: string, body: string, url: string) => {
@@ -110,10 +117,9 @@ const sendPushNotification = async (subscription: any, title: string, body: stri
     return true;
   } catch (error: any) {
     console.error('❌ Failed to send notification:', error);
-    // Remove expired/invalid subscriptions
+    // Note: Can't remove hardcoded subscriptions, but log the error
     if (error.statusCode === 410) {
-      subscriptions.delete(subscription.endpoint);
-      console.log(`Removed expired subscription: ${subscription.endpoint}`);
+      console.log(`Subscription expired: ${subscription.endpoint}`);
     }
     return false;
   }
