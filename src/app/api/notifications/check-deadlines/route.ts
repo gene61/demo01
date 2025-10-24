@@ -161,52 +161,30 @@ const checkDeadlines = async () => {
   console.log('🔔 Check deadlines function started');
   
   try {
-    // Get upcoming deadlines
-    const upcomingDeadlines = await getUpcomingDeadlines();
-    const overdueDeadlines = await getOverdueDeadlines();
-    
     // Get subscribed users
     const subscribers = await getSubscribedUsers();
     
-    console.log('🔔 Step 3: Sending notifications');
+    console.log('🔔 Step 3: Sending test notifications');
     let sentCount = 0;
     
-    // Send notifications for upcoming deadlines
-    for (const todo of upcomingDeadlines) {
-      const timeUntilDeadline = Math.floor((new Date(todo.deadline).getTime() - new Date().getTime()) / (60 * 1000));
-      
-      for (const subscriber of subscribers) {
-        const result = await sendPushNotification(
-          subscriber,
-          '⏰ Task Deadline Approaching',
-          `"${todo.text}" is due in ${timeUntilDeadline} minutes`,
-          `/task/${todo.id}`
-        );
-        if (result) sentCount++;
-      }
-    }
-    
-    // Send notifications for overdue deadlines
-    for (const todo of overdueDeadlines) {
-      for (const subscriber of subscribers) {
-        const result = await sendPushNotification(
-          subscriber,
-          '⚠️ Task Overdue',
-          `"${todo.text}" is overdue!`,
-          `/task/${todo.id}`
-        );
-        if (result) sentCount++;
-      }
+    // Send test notification to all subscribers
+    for (const subscriber of subscribers) {
+      const result = await sendPushNotification(
+        subscriber,
+        '⏰ Task Deadline Reminder',
+        'You have tasks that are about to be due or overdue. Check your todo list!',
+        '/'
+      );
+      if (result) sentCount++;
     }
     
     console.log(`✅ Successfully sent ${sentCount} notifications`);
     
     return NextResponse.json({ 
       success: true, 
-      upcomingDeadlines: upcomingDeadlines.length,
-      overdueDeadlines: overdueDeadlines.length,
       subscribers: subscribers.length,
-      notificationsSent: sentCount
+      notificationsSent: sentCount,
+      message: 'Test deadline reminder sent to all subscribers'
     });
     
   } catch (error) {
