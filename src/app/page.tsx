@@ -14,6 +14,7 @@ interface Todo {
   text: string;
   completed: boolean;
   createdAt: Date;
+  deadline?: Date;
   steps: TaskStep[];
   aiChatHistory: string[];
 }
@@ -24,7 +25,9 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [todos, setTodos] = useState<Todo[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [deadlineInput, setDeadlineInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Check if already authenticated on component mount
   useEffect(() => {
@@ -90,18 +93,84 @@ export default function Home() {
     setPassword('');
   };
 
+  // Subscribe to push notifications
+  const subscribeToNotifications = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications are not supported in this browser');
+      return;
+    }
+
+    try {
+      // Register service worker
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered');
+
+      // Request notification permission
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('Notification permission denied');
+        return;
+      }
+
+      // Subscribe to push notifications
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      });
+
+      // Send subscription to server
+      const response = await fetch('/api/notifications/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(subscription),
+      });
+
+      if (response.ok) {
+        setIsSubscribed(true);
+        localStorage.setItem('pushSubscribed', 'true');
+        alert('Successfully subscribed to notifications! You will receive reminders for task deadlines.');
+      } else {
+        alert('Failed to subscribe to notifications');
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      alert('Failed to subscribe to notifications');
+    }
+  };
+
+  // Check if already subscribed
+  useEffect(() => {
+    if (isAuthenticated && localStorage.getItem('pushSubscribed') === 'true') {
+      setIsSubscribed(true);
+    }
+  }, [isAuthenticated]);
+
   const addTodo = () => {
     if (inputValue.trim() !== '') {
+      let deadline: Date | undefined;
+      
+      if (deadlineInput) {
+        deadline = new Date(deadlineInput);
+        if (isNaN(deadline.getTime())) {
+          alert('Invalid deadline date');
+          return;
+        }
+      }
+
       const newTodo: Todo = {
         id: Date.now().toString(),
         text: inputValue.trim(),
         completed: false,
         createdAt: new Date(),
+        deadline,
         steps: [],
         aiChatHistory: []
       };
       setTodos([...todos, newTodo]);
       setInputValue('');
+      setDeadlineInput('');
     }
   };
 
@@ -198,23 +267,63 @@ export default function Home() {
 
         {/* Add Todo Form */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Add a new task..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
-            />
-            <button
-              onClick={addTodo}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base whitespace-nowrap min-w-[60px]"
-            >
-              Add
-            </button>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Add a new task..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+              />
+              <button
+                onClick={addTodo}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base whitespace-nowrap min-w-[60px]"
+              >
+                Add
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="datetime-local"
+                value={deadlineInput}
+                onChange={(e) => setDeadlineInput(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                placeholder="Set deadline (optional)"
+              />
+            </div>
           </div>
         </div>
+
+        {/* Notification Subscription */}
+        {!isSubscribed && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-yellow-800 font-medium">Get Deadline Reminders</h3>
+                <p className="text-yellow-700 text-sm">Subscribe to receive push notifications when tasks are due</p>
+              </div>
+              <button
+                onClick={subscribeToNotifications}
+                className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-colors text-sm"
+              >
+                Subscribe
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isSubscribed && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-green-800 text-sm">You're subscribed to deadline notifications</span>
+            </div>
+          </div>
+        )}
 
         {/* Todo List */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -236,15 +345,27 @@ export default function Home() {
                     onChange={() => toggleTodo(todo.id)}
                     className="w-5 h-5 text-blue-500 rounded focus:ring-blue-500"
                   />
-                  <span
-                    className={`flex-1 ${
-                      todo.completed
-                        ? 'line-through text-gray-400'
-                        : 'text-gray-700'
-                    }`}
-                  >
-                    {todo.text}
-                  </span>
+                  <div className="flex-1">
+                    <span
+                      className={`block ${
+                        todo.completed
+                          ? 'line-through text-gray-400'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      {todo.text}
+                    </span>
+                    {todo.deadline && (
+                      <div className={`text-xs mt-1 ${
+                        new Date(todo.deadline) < new Date() && !todo.completed 
+                          ? 'text-red-500 font-medium' 
+                          : 'text-gray-500'
+                      }`}>
+                        ⏰ {new Date(todo.deadline).toLocaleString()}
+                        {new Date(todo.deadline) < new Date() && !todo.completed && ' (Overdue)'}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-10">
                     <button
                       onClick={() => router.push(`/task/${todo.id}`)}

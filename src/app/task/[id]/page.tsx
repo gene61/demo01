@@ -14,6 +14,7 @@ interface Task {
   text: string;
   completed: boolean;
   createdAt: Date;
+  deadline?: Date;
   steps: TaskStep[];
   aiChatHistory: string[];
 }
@@ -26,6 +27,8 @@ export default function TaskDetail() {
   const [isGeneratingSteps, setIsGeneratingSteps] = useState(false);
   const [showGenerateStepsModal, setShowGenerateStepsModal] = useState(false);
   const [generateStepsInput, setGenerateStepsInput] = useState('');
+  const [showDeadlineModal, setShowDeadlineModal] = useState(false);
+  const [deadlineInput, setDeadlineInput] = useState('');
   const chatHistoryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -189,6 +192,42 @@ export default function TaskDetail() {
     updateTask({ ...task, steps: updatedSteps });
   };
 
+  const openDeadlineModal = () => {
+    setShowDeadlineModal(true);
+    setDeadlineInput(task?.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '');
+  };
+
+  const closeDeadlineModal = () => {
+    setShowDeadlineModal(false);
+    setDeadlineInput('');
+  };
+
+  const updateDeadline = () => {
+    if (!task) return;
+    
+    let deadline: Date | undefined;
+    
+    if (deadlineInput) {
+      deadline = new Date(deadlineInput);
+      if (isNaN(deadline.getTime())) {
+        alert('Invalid deadline date');
+        return;
+      }
+    }
+
+    const updatedTask = { ...task, deadline };
+    updateTask(updatedTask);
+    closeDeadlineModal();
+  };
+
+  const removeDeadline = () => {
+    if (!task) return;
+    
+    const updatedTask = { ...task, deadline: undefined };
+    updateTask(updatedTask);
+    closeDeadlineModal();
+  };
+
   // Simple markdown renderer
   const renderMarkdown = (text: string) => {
     if (!text) return '';
@@ -277,11 +316,31 @@ export default function TaskDetail() {
 
         {/* Task Info */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">{task.text}</h2>
-          <p className="text-gray-600 text-sm">
-            Created: {new Date(task.createdAt).toLocaleDateString()}
-          </p>
-          <div className={`inline-block px-3 py-1 rounded-full text-sm mt-2 ${
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">{task.text}</h2>
+              <p className="text-gray-600 text-sm">
+                Created: {new Date(task.createdAt).toLocaleDateString()}
+              </p>
+              {task.deadline && (
+                <div className={`mt-2 text-sm ${
+                  new Date(task.deadline) < new Date() && !task.completed 
+                    ? 'text-red-500 font-medium' 
+                    : 'text-gray-600'
+                }`}>
+                  ⏰ Deadline: {new Date(task.deadline).toLocaleString()}
+                  {new Date(task.deadline) < new Date() && !task.completed && ' (Overdue)'}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={openDeadlineModal}
+              className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              {task.deadline ? 'Edit Deadline' : 'Set Deadline'}
+            </button>
+          </div>
+          <div className={`inline-block px-3 py-1 rounded-full text-sm ${
             task.completed 
               ? 'bg-green-100 text-green-800' 
               : 'bg-yellow-100 text-yellow-800'
@@ -441,6 +500,48 @@ export default function TaskDetail() {
                 className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isGeneratingSteps ? 'Generating...' : 'Generate Steps'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deadline Modal */}
+      {showDeadlineModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              {task?.deadline ? 'Edit Deadline' : 'Set Deadline'}
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Set a deadline for this task to receive push notifications when it's due:
+            </p>
+            <input
+              type="datetime-local"
+              value={deadlineInput}
+              onChange={(e) => setDeadlineInput(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <div className="flex gap-2 mt-4">
+              {task?.deadline && (
+                <button
+                  onClick={removeDeadline}
+                  className="px-4 py-2 text-red-500 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  Remove Deadline
+                </button>
+              )}
+              <button
+                onClick={closeDeadlineModal}
+                className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updateDeadline}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                {task?.deadline ? 'Update' : 'Set Deadline'}
               </button>
             </div>
           </div>
