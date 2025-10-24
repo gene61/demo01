@@ -18,15 +18,13 @@ interface Todo {
   aiChatHistory: string[];
 }
 
-// Set your password here - change this to whatever you want
-const APP_PASSWORD = '61';
-
 export default function Home() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [todos, setTodos] = useState<Todo[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Check if already authenticated on component mount
   useEffect(() => {
@@ -53,14 +51,36 @@ export default function Home() {
     }
   }, [todos, isAuthenticated]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === APP_PASSWORD) {
-      setIsAuthenticated(true);
-      localStorage.setItem('isAuthenticated', 'true');
-    } else {
-      alert('Incorrect password. Please try again.');
+    if (!password.trim()) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsAuthenticated(true);
+        localStorage.setItem('isAuthenticated', 'true');
+      } else {
+        alert('Incorrect password. Please try again.');
+        setPassword('');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Authentication failed. Please try again.');
       setPassword('');
+    } finally {
+      setIsLoading(false);
     }
   };
 
