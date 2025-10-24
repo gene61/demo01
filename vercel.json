@@ -12,7 +12,7 @@
     }
   ],
   "functions": {
-    "app/api/**/*.ts": {
+    "app/api/notifications/check-deadlines/route.ts": {
       "maxDuration": 30
     }
   }
