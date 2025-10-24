@@ -3,13 +3,23 @@ import { NextRequest, NextResponse } from 'next/server';
 // Web Push library for sending notifications
 const webpush = require('web-push');
 
-// Configure web push (you'll need to set these environment variables)
-// In production, generate these keys using: webpush.generateVAPIDKeys()
-webpush.setVapidDetails(
-  'mailto:your-email@example.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'your-public-vapid-key',
-  process.env.VAPID_PRIVATE_KEY || 'your-private-vapid-key'
-);
+// Configure web push only if VAPID keys are available
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+if (vapidPublicKey && vapidPrivateKey) {
+  try {
+    webpush.setVapidDetails(
+      'mailto:your-email@example.com',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+  } catch (error) {
+    console.warn('Failed to set VAPID details:', error);
+  }
+} else {
+  console.warn('VAPID keys not configured. Push notifications will not work.');
+}
 
 // Mock subscriptions store (in production, use a database)
 const subscriptions = new Map();
