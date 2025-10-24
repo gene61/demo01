@@ -131,6 +131,11 @@ export default function Home() {
         applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       });
 
+      // Log subscription data to console for debugging
+      console.log('📱 Push Subscription Data:', JSON.stringify(subscription, null, 2));
+      console.log('📋 Copy this subscription object to your test-notification function:');
+      console.log(subscription);
+
       // Send subscription to server
       const response = await fetch('/api/notifications/subscribe', {
         method: 'POST',
@@ -143,7 +148,9 @@ export default function Home() {
       if (response.ok) {
         setIsSubscribed(true);
         localStorage.setItem('pushSubscribed', 'true');
-        alert('Successfully subscribed to notifications! You will receive reminders for task deadlines.');
+        
+        // Show subscription data in alert for easy copying
+        alert(`✅ Successfully subscribed to notifications!\n\n📱 Your subscription data has been logged to the browser console.\n\n📋 To test notifications, copy this subscription object from the console and paste it into the test-notification function.`);
       } else {
         alert('Failed to subscribe to notifications');
       }
@@ -153,11 +160,38 @@ export default function Home() {
     }
   };
 
-  // Check if already subscribed
+  // Check if already subscribed and verify subscription status
   useEffect(() => {
-    if (isAuthenticated && localStorage.getItem('pushSubscribed') === 'true') {
-      setIsSubscribed(true);
-    }
+    const checkSubscriptionStatus = async () => {
+      if (isAuthenticated && localStorage.getItem('pushSubscribed') === 'true') {
+        try {
+          // Check if service worker is registered and subscription is valid
+          if ('serviceWorker' in navigator && 'PushManager' in window) {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            
+            if (subscription) {
+              setIsSubscribed(true);
+            } else {
+              // Subscription was revoked or expired
+              setIsSubscribed(false);
+              localStorage.removeItem('pushSubscribed');
+            }
+          } else {
+            setIsSubscribed(false);
+            localStorage.removeItem('pushSubscribed');
+          }
+        } catch (error) {
+          console.error('Error checking subscription status:', error);
+          setIsSubscribed(false);
+          localStorage.removeItem('pushSubscribed');
+        }
+      } else {
+        setIsSubscribed(false);
+      }
+    };
+
+    checkSubscriptionStatus();
   }, [isAuthenticated]);
 
   const addTodo = () => {

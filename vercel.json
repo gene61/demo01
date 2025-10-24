@@ -9,10 +9,17 @@
     {
       "path": "/api/notifications/check-deadlines",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/notifications/test-notification",
+      "schedule": "0 7 * * *"
     }
   ],
   "functions": {
     "app/api/notifications/check-deadlines/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/notifications/test-notification/route.ts": {
       "maxDuration": 30
     }
   }
