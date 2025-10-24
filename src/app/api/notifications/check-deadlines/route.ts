@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const now = new Date();
+    // Use Perth timezone (UTC+8)
+    const perthTimeZone = 'Australia/Perth';
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: perthTimeZone }));
     const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
     const notificationsSent = [];
 
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest) {
             });
             
             console.log(`Notification sent for todo: ${todo.text}`);
-          } catch (error) {
+          } catch (error: any) {
             console.error('Failed to send notification:', error);
             // Remove expired/invalid subscriptions
             if (error.statusCode === 410) {
@@ -87,7 +89,7 @@ export async function POST(request: NextRequest) {
             });
             
             console.log(`Overdue notification sent for todo: ${todo.text}`);
-          } catch (error) {
+          } catch (error: any) {
             console.error('Failed to send overdue notification:', error);
             if (error.statusCode === 410) {
               subscriptions.delete(subscription.endpoint);

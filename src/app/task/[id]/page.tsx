@@ -19,6 +19,19 @@ interface Task {
   aiChatHistory: string[];
 }
 
+// Helper function to format date in Perth timezone
+const formatPerthTime = (date: Date) => {
+  return date.toLocaleString('en-AU', {
+    timeZone: 'Australia/Perth',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
 export default function TaskDetail() {
   const params = useParams();
   const router = useRouter();
@@ -328,7 +341,7 @@ export default function TaskDetail() {
                     ? 'text-red-500 font-medium' 
                     : 'text-gray-600'
                 }`}>
-                  ⏰ Deadline: {new Date(task.deadline).toLocaleString()}
+                  ⏰ Deadline: {formatPerthTime(new Date(task.deadline))}
                   {new Date(task.deadline) < new Date() && !task.completed && ' (Overdue)'}
                 </div>
               )}

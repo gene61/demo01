@@ -19,6 +19,19 @@ interface Todo {
   aiChatHistory: string[];
 }
 
+// Helper function to format date in Perth timezone
+const formatPerthTime = (date: Date) => {
+  return date.toLocaleString('en-AU', {
+    timeZone: 'Australia/Perth',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
 export default function Home() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -361,7 +374,7 @@ export default function Home() {
                           ? 'text-red-500 font-medium' 
                           : 'text-gray-500'
                       }`}>
-                        ⏰ {new Date(todo.deadline).toLocaleString()}
+                        ⏰ {formatPerthTime(new Date(todo.deadline))}
                         {new Date(todo.deadline) < new Date() && !todo.completed && ' (Overdue)'}
                       </div>
                     )}
