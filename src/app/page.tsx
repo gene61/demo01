@@ -114,9 +114,29 @@ export default function Home() {
     }
 
     try {
-      // Register service worker
+      // Register service worker and wait for it to be ready
       const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registered');
+      console.log('Service Worker registered, waiting for activation...');
+
+      // Wait for service worker to be fully activated
+      await new Promise((resolve) => {
+        if (registration.active) {
+          resolve(registration);
+        } else {
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'activated') {
+                  resolve(registration);
+                }
+              });
+            }
+          });
+        }
+      });
+
+      console.log('Service Worker activated and ready');
 
       // Request notification permission
       const permission = await Notification.requestPermission();
@@ -125,16 +145,24 @@ export default function Home() {
         return;
       }
 
+      // Convert VAPID public key to Uint8Array
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidPublicKey) {
+        alert('VAPID public key not configured');
+        return;
+      }
+
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+
       // Subscribe to push notifications
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        applicationServerKey: applicationServerKey
       });
 
       // Log subscription data to console for debugging
       console.log('📱 Push Subscription Data:', JSON.stringify(subscription, null, 2));
-      console.log('📋 Copy this subscription object to your test-notification function:');
-      console.log(subscription);
+      console.log('✅ Push subscription created successfully');
 
       // Send subscription to server
       const response = await fetch('/api/notifications/subscribe', {
@@ -149,15 +177,30 @@ export default function Home() {
         setIsSubscribed(true);
         localStorage.setItem('pushSubscribed', 'true');
         
-        // Show subscription data in alert for easy copying
-        alert(`✅ Successfully subscribed to notifications!\n\n📱 Your subscription data has been logged to the browser console.\n\n📋 To test notifications, copy this subscription object from the console and paste it into the test-notification function.`);
+        alert('✅ Successfully subscribed to deadline notifications!');
       } else {
         alert('Failed to subscribe to notifications');
       }
     } catch (error) {
       console.error('Subscription error:', error);
-      alert('Failed to subscribe to notifications');
+      alert('Failed to subscribe to notifications: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
+  };
+
+  // Helper function to convert base64 to Uint8Array
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
   };
 
   // Check if already subscribed and verify subscription status
