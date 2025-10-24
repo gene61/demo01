@@ -141,7 +141,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Deadline check error:', error);
     return NextResponse.json(
-      { error: 'Failed to check deadlines' },
+      { 
+        error: 'Failed to check deadlines',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
