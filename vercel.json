@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/notifications/check-deadlines",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "functions": {
+    "app/api/notifications/check-deadlines/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
