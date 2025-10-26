@@ -156,8 +156,8 @@ export default function Home() {
 
     // First, ask user if they want to enable notifications
     const userConfirmed = window.confirm(
-      'Enable push notifications for deadline reminders?\n\n' +
-      'You will receive notifications when tasks are due or overdue.\n\n' +
+      'Enable push notifications for task reminders?\n\n' +
+      'You will receive daily notifications when any active task is detected.\n\n' +
       'Click "OK" to allow notifications, or "Cancel" to skip.'
     );
 
@@ -195,7 +195,7 @@ export default function Home() {
           if (response.ok) {
             setIsSubscribed(true);
             localStorage.setItem('pushSubscribed', 'true');
-            alert('✅ Already subscribed to deadline notifications!');
+            alert('✅ Already subscribed to notifications!');
             return;
           }
         } catch (error) {
@@ -207,7 +207,7 @@ export default function Home() {
       const currentPermission = Notification.permission;
       
       if (currentPermission === 'denied') {
-        alert('Notifications are currently blocked. Please enable them in your browser settings to receive deadline reminders.');
+        alert('Notifications are currently blocked. Please enable them in your browser settings to receive reminders.');
         return;
       }
       
@@ -255,7 +255,7 @@ export default function Home() {
         setIsSubscribed(true);
         localStorage.setItem('pushSubscribed', 'true');
         
-        alert('✅ Successfully subscribed to deadline notifications!');
+        alert('✅ Successfully subscribed to active task notifications!');
       } else {
         alert('Failed to subscribe to notifications');
       }
