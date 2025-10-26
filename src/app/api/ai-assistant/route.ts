@@ -11,7 +11,6 @@ interface AIRequest {
   userInput: string;
   existingSteps: TaskStep[];
   chatHistory: string[];
-  mode?: 'chat' | 'generate-steps'; // New parameter to specify mode
 }
 
 interface AIResponse {
@@ -21,7 +20,7 @@ interface AIResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { task, userInput, existingSteps, chatHistory, mode = 'chat' }: AIRequest = await request.json();
+    const { task, userInput, existingSteps, chatHistory }: AIRequest = await request.json();
     
     // Get API key from environment
     const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -32,13 +31,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare the conversation context based on mode
-    const context = mode === 'generate-steps' 
-      ? buildDirectStepGenerationContext(task, userInput, existingSteps, chatHistory)
-      : buildContext(task, userInput, existingSteps, chatHistory);
+    // Prepare the conversation context
+    const context = buildContext(task, userInput, existingSteps, chatHistory);
     
     // Call DeepSeek API
-    const aiResponse = await callDeepSeekAPI(apiKey, context, mode);
+    const aiResponse = await callDeepSeekAPI(apiKey, context);
     
     // Parse the AI response to extract steps
     const parsedSteps = parseStepsFromAIResponse(aiResponse, existingSteps);
@@ -98,57 +95,15 @@ Important rules:
 - Create 3-7 steps depending on complexity
 - Make steps sequential and logical
 - Each step should be a single actionable item
-- If you're asking general questions, don't provide steps yet
+- If you're asked general questions, or you are missing key information from user, don't provide steps yet
 - format your response with bullet points if needed
-- make reasonable assumptions if information is missing`;
+- make reasonable assumptions if non-critical information is missing`;
 
   return context;
 }
 
-function buildDirectStepGenerationContext(
-  task: string, 
-  userInput: string,
-  existingSteps: TaskStep[], 
-  chatHistory: string[]
-): string {
-  let context = `You are a task planning assistant. Based on the conversation history, generate direct action steps for the task: "${task}".
 
-`;
-
-  if (userInput) {
-    context += `Additional user requirements: ${userInput}\n\n`;
-  }
-
-  if (chatHistory.length > 0) {
-    context += `Conversation context:\n${chatHistory.slice(-10).join('\n')}\n\n`;
-  }
-
-  if (existingSteps.length > 0) {
-    context += `Current steps for this task:\n${existingSteps.map(step => 
-      `- ${step.text} ${step.completed ? '(completed)' : '(pending)'}`
-    ).join('\n')}\n\n`;
-  }
-
-  context += `IMPORTANT: Generate action steps directly without asking questions or providing explanations.
-Just provide the list of action steps in this exact format:
-
-STEPS_START
-- [Step description 1]
-- [Step description 2]
-- [Step description 3]
-STEPS_END
-
-Rules:
-- Create 3-7 actionable, specific steps
-- Make steps sequential and logical
-- Keep each step concise and clear
-- If modifying existing steps, maintain completed status where appropriate
-- Do not include any text before or after the STEPS_START/STEPS_END markers`;
-
-  return context;
-}
-
-async function callDeepSeekAPI(apiKey: string, context: string, mode: 'chat' | 'generate-steps' = 'chat'): Promise<string> {
+async function callDeepSeekAPI(apiKey: string, context: string): Promise<string> {
   // Optimize for speed - use faster model and reduce complexity
   const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',

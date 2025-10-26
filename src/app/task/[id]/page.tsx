@@ -105,8 +105,7 @@ export default function TaskDetail() {
           task: task.text,
           userInput: aiInput,
           existingSteps: task.steps,
-          chatHistory: task.aiChatHistory,
-          mode: 'chat' // Use chat mode for interactive conversation
+          chatHistory: task.aiChatHistory
         }),
       });
 
@@ -149,7 +148,7 @@ export default function TaskDetail() {
     setIsGeneratingSteps(true);
     
     try {
-      const response = await fetch('/api/ai-assistant', {
+      const response = await fetch('/api/ai-assistant/generate-steps', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,8 +157,7 @@ export default function TaskDetail() {
           task: task.text,
           userInput: userInput || '',
           existingSteps: task.steps,
-          chatHistory: task.aiChatHistory,
-          mode: 'generate-steps' // Use generate-steps mode for direct step generation
+          chatHistory: task.aiChatHistory
         }),
       });
 
