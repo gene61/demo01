@@ -42,6 +42,7 @@ export default function TaskDetail() {
   const [generateStepsInput, setGenerateStepsInput] = useState('');
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
   const [deadlineInput, setDeadlineInput] = useState('');
+  const [forceSteps, setForceSteps] = useState(false);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -105,7 +106,8 @@ export default function TaskDetail() {
           task: task.text,
           userInput: aiInput,
           existingSteps: task.steps,
-          chatHistory: task.aiChatHistory
+          chatHistory: task.aiChatHistory,
+          forceSteps: forceSteps // Add forceSteps flag to API request
         }),
       });
 
@@ -395,27 +397,41 @@ export default function TaskDetail() {
             )}
             
             {/* Chat Input */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                placeholder="Ask GoalBee to create steps..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !isGeneratingSteps) {
-                    generateStepsWithAI();
-                  }
-                }}
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={generateStepsWithAI}
-                  disabled={isGeneratingSteps || !aiInput.trim()}
-                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-                >
-                  {isGeneratingSteps ? 'Generating...' : 'Chat'}
-                </button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  id="forceSteps"
+                  checked={forceSteps}
+                  onChange={(e) => setForceSteps(e.target.checked)}
+                  className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="forceSteps" className="text-sm text-gray-700">
+                  Always generate steps (best effort with available info)
+                </label>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  placeholder="Ask GoalBee to create steps..."
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !isGeneratingSteps) {
+                      generateStepsWithAI();
+                    }
+                  }}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={generateStepsWithAI}
+                    disabled={isGeneratingSteps || !aiInput.trim()}
+                    className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                  >
+                    {isGeneratingSteps ? 'Generating...' : 'Chat'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -429,15 +445,6 @@ export default function TaskDetail() {
               <span className="text-sm text-gray-500">
                 {task.steps.filter(s => s.completed).length} of {task.steps.length} completed
               </span>
-              {task.aiChatHistory.length > 0 && (
-                <button
-                  onClick={openGenerateStepsModal}
-                  disabled={isGeneratingSteps}
-                  className="px-3 py-1 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isGeneratingSteps ? 'Generating...' : 'Generate Steps Now'}
-                </button>
-              )}
             </div>
           </div>
 

@@ -11,6 +11,7 @@ interface AIRequest {
   userInput: string;
   existingSteps: TaskStep[];
   chatHistory: string[];
+  forceSteps?: boolean;
 }
 
 interface AIResponse {
@@ -20,7 +21,7 @@ interface AIResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const { task, userInput, existingSteps, chatHistory }: AIRequest = await request.json();
+    const { task, userInput, existingSteps, chatHistory, forceSteps }: AIRequest = await request.json();
     
     // Get API key from environment
     const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -32,13 +33,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare the conversation context
-    const context = buildContext(task, userInput, existingSteps, chatHistory);
+    const context = buildContext(task, userInput, existingSteps, chatHistory, forceSteps);
     
     // Call DeepSeek API
     const aiResponse = await callDeepSeekAPI(apiKey, context);
     
     // Parse the AI response to extract steps
-    const parsedSteps = parseStepsFromAIResponse(aiResponse, existingSteps);
+    const parsedSteps = parseStepsFromAIResponse(aiResponse, existingSteps, forceSteps);
     
     return NextResponse.json({
       steps: parsedSteps,
@@ -58,7 +59,8 @@ function buildContext(
   task: string, 
   userInput: string, 
   existingSteps: TaskStep[], 
-  chatHistory: string[]
+  chatHistory: string[],
+  forceSteps?: boolean
 ): string {
   let context = `You are a helpful task planning assistant. The user has a task: "${task}".
 
@@ -95,9 +97,15 @@ Important rules:
 - Create 3-7 steps depending on complexity
 - Make steps sequential and logical
 - Each step should be a single actionable item
-- If you're asked general questions, or you are missing key information from user, don't provide steps yet
 - format your response with bullet points if needed
 - make reasonable assumptions if non-critical information is missing`;
+
+  // Add force steps instruction if enabled
+  if (forceSteps) {
+    context += `\n\nIMPORTANT: The user has requested that you ALWAYS provide action steps, even if you're missing some information. Make your best effort to create reasonable steps based on what you know.`;
+  } else {
+    context += `\n\nIf you're asked general questions, or you are missing key information from user, don't provide steps yet`;
+  }
 
   return context;
 }
@@ -143,13 +151,13 @@ async function callDeepSeekAPI(apiKey: string, context: string): Promise<string>
   return data.choices[0]?.message?.content || 'No response from AI';
 }
 
-function parseStepsFromAIResponse(aiResponse: string, existingSteps: TaskStep[]): TaskStep[] {
+function parseStepsFromAIResponse(aiResponse: string, existingSteps: TaskStep[], forceSteps?: boolean): TaskStep[] {
   try {
     // Check if the AI is asking questions (contains question marks and doesn't provide steps)
     const isAskingQuestions = aiResponse.includes('?') && !aiResponse.includes('STEPS_START');
     
-    if (isAskingQuestions) {
-      // If AI is asking questions, don't update steps yet
+    if (isAskingQuestions && !forceSteps) {
+      // If AI is asking questions and forceSteps is not enabled, don't update steps yet
       return existingSteps;
     }
 
