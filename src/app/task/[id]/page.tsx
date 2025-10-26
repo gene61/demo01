@@ -241,6 +241,19 @@ export default function TaskDetail() {
     closeDeadlineModal();
   };
 
+  const clearChatAndSteps = () => {
+    if (!task) return;
+    
+    if (confirm('Are you sure you want to clear all chat history and steps for this task? This action cannot be undone.')) {
+      const updatedTask = {
+        ...task,
+        steps: [],
+        aiChatHistory: []
+      };
+      updateTask(updatedTask);
+    }
+  };
+
   // Simple markdown renderer
   const renderMarkdown = (text: string) => {
     if (!text) return '';
@@ -364,7 +377,17 @@ export default function TaskDetail() {
 
         {/* AI Assistant Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">GoalBee 🐝</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">GoalBee 🐝</h3>
+            {task.aiChatHistory.length > 0 && (
+              <button
+                onClick={clearChatAndSteps}
+                className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Clear Chat & Steps
+              </button>
+            )}
+          </div>
           <div className="space-y-4">
             {/* Chat History */}
             {task.aiChatHistory.length > 0 && (
@@ -398,18 +421,6 @@ export default function TaskDetail() {
             
             {/* Chat Input */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="checkbox"
-                  id="forceSteps"
-                  checked={forceSteps}
-                  onChange={(e) => setForceSteps(e.target.checked)}
-                  className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="forceSteps" className="text-sm text-gray-700">
-                  Always generate steps (best effort with available info)
-                </label>
-              </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
@@ -432,6 +443,18 @@ export default function TaskDetail() {
                     {isGeneratingSteps ? 'Generating...' : 'Chat'}
                   </button>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="forceSteps"
+                  checked={forceSteps}
+                  onChange={(e) => setForceSteps(e.target.checked)}
+                  className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="forceSteps" className="text-sm text-gray-700">
+                  Always generate steps (best effort with available info)
+                </label>
               </div>
             </div>
           </div>
