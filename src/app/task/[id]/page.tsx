@@ -336,7 +336,6 @@ export default function TaskDetail() {
             </svg>
             Back
           </button>
-          <h1 className="text-3xl font-bold text-gray-800">Task Details</h1>
           <div className="w-20"></div> {/* Spacer for alignment */}
         </div>
 
@@ -444,7 +443,7 @@ export default function TaskDetail() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-10">
                 <input
                   type="checkbox"
                   id="forceSteps"
@@ -452,7 +451,7 @@ export default function TaskDetail() {
                   onChange={(e) => setForceSteps(e.target.checked)}
                   className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="forceSteps" className="text-sm text-gray-700">
+                <label htmlFor="forceSteps" className="text-xs text-gray-700">
                   Always generate steps (best effort with available info)
                 </label>
               </div>
