@@ -55,8 +55,7 @@ export async function GET() {
       try {
         await webpush.sendNotification(subscription, JSON.stringify({
           title: '📝 GoalBee Reminder',
-          body: 'Check your tasks - some deadlines might be approaching!',
-          url: '/'
+          body: 'Check your tasks - some deadlines might be approaching!'
         }));
         console.log(`✅ Sent to: ${subscription.endpoint.substring(0, 50)}...`);
         results.push({ endpoint: subscription.endpoint, success: true });
