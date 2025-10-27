@@ -42,6 +42,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
 
   // Check if already authenticated on component mount
   useEffect(() => {
@@ -49,6 +50,22 @@ export default function Home() {
     if (authStatus === 'true') {
       setIsAuthenticated(true);
     }
+  }, []);
+
+  // Check online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    setIsOnline(navigator.onLine);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Load todos from localStorage on authentication
@@ -115,6 +132,28 @@ export default function Home() {
     setIsLoading(true);
     
     try {
+      // Check if we're offline and have cached authentication
+      if (!isOnline) {
+        const cachedAuth = localStorage.getItem('authStatus');
+        if (cachedAuth) {
+          const authData = JSON.parse(cachedAuth);
+          // Check if cached auth is still valid (within 24 hours)
+          if (Date.now() - authData.timestamp < 24 * 60 * 60 * 1000) {
+            setIsAuthenticated(true);
+            localStorage.setItem('isAuthenticated', 'true');
+            setPassword('');
+            setIsLoading(false);
+            return; // Successfully used cached authentication
+          }
+        }
+        // No valid cached auth available offline
+        alert('Authentication unavailable offline. Please connect to the internet to login.');
+        setPassword('');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Online: Make API call
       const response = await fetch('/api/auth', {
         method: 'POST',
         headers: {
@@ -122,12 +161,17 @@ export default function Home() {
         },
         body: JSON.stringify({ password }),
       });
-
+      console.log(response)
       const data = await response.json();
       
       if (data.success) {
         setIsAuthenticated(true);
         localStorage.setItem('isAuthenticated', 'true');
+        // Store detailed auth status with timestamp for offline use
+        localStorage.setItem('authStatus', JSON.stringify({
+          authenticated: true,
+          timestamp: Date.now()
+        }));
       } else {
         alert('Incorrect password. Please try again.');
         setPassword('');
@@ -144,6 +188,7 @@ export default function Home() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('authStatus');
     setPassword('');
   };
 
@@ -313,6 +358,11 @@ export default function Home() {
 
   // Toggle subscription
   const toggleSubscription = () => {
+    if (!isOnline) {
+      alert('Notification management is unavailable offline. Please check your internet connection.');
+      return;
+    }
+    
     if (isSubscribed) {
       unsubscribeFromNotifications();
     } else {
@@ -338,6 +388,11 @@ export default function Home() {
 
   // Function to get current subscription endpoint
   const getCurrentEndpoint = async () => {
+    if (!isOnline) {
+      alert('Cannot retrieve endpoint while offline. Please check your internet connection.');
+      return;
+    }
+    
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       alert('Push notifications are not supported in this browser');
       return;
@@ -537,6 +592,18 @@ export default function Home() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">GoalBee 🐝</h1>
           <p className="text-gray-600">Stay organized and productive</p>
+          
+          {/* Offline Indicator */}
+          {!isOnline && (
+            <div className="mt-2 px-4 py-2 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg text-sm">
+              <div className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <span>You're offline - working in offline mode</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -566,12 +633,14 @@ export default function Home() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Add a task and enter deadline below..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                placeholder={isOnline ? "Add a task and enter deadline below..." : "Task management unavailable offline"}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
+                disabled={!isOnline}
               />
               <button
                 onClick={addTodo}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base whitespace-nowrap min-w-[60px]"
+                disabled={!isOnline}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base whitespace-nowrap min-w-[60px] disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 Add
               </button>
@@ -652,7 +721,9 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => deleteTodo(todo.id)}
-                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                      disabled={!isOnline}
+                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                      title={isOnline ? "Delete task" : "Delete unavailable offline"}
                     >
                       <svg
                         className="w-5 h-5"
@@ -690,6 +761,14 @@ export default function Home() {
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
           <p>Your tasks are saved locally in your browser</p>
+          {!isOnline && (
+            <div className="mt-1">
+              <p className="text-yellow-600">Offline mode: Task management disabled</p>
+              <p className="text-yellow-500 text-xs mt-1">
+                You can view tasks but cannot add or delete while offline
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

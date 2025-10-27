@@ -1,134 +1,214 @@
-// // Service Worker for Push Notifications
-// self.addEventListener('install', (event) => {
-//   console.log('Service Worker installed');
-//   self.skipWaiting();
-// });
+// Enhanced Service Worker for GoalBee PWA with Offline Capabilities
+const CACHE_NAME = 'goalbee-v1.2';
+const STATIC_CACHE = 'goalbee-static-v1.2';
+const DYNAMIC_CACHE = 'goalbee-dynamic-v1.2';
 
-// self.addEventListener('activate', (event) => {
-//   console.log('Service Worker activated');
-//   event.waitUntil(self.clients.claim());
-// });
+// Assets to cache for offline functionality
+const STATIC_ASSETS = [
+  '/',
+  '/manifest.json',
+  '/icon-192x192.svg',
+  '/icon-512x512.svg',
+  '/favicon.ico',
+  '/sw.js',
+  '/task/',
+  '/task/[id]/'
+];
 
-// self.addEventListener('push', (event) => {
-//   if (!event.data) return;
+// API routes that should work offline (read-only)
+const OFFLINE_API_ROUTES = [
+  '/api/auth'
+];
 
-//   const data = event.data.json();
-//   const options = {
-//     body: data.body,
-//     icon: '/icon-192x192.svg',
-//     badge: '/icon-192x192.svg',
-//     vibrate: [200, 100, 200],
-//     data: {
-//       url: data.url || '/'
-//     },
-//     actions: [
-//       {
-//         action: 'open',
-//         title: 'Open App'
-//       },
-//       {
-//         action: 'close',
-//         title: 'Close'
-//       }
-//     ]
-//   };
-
-//   event.waitUntil(
-//     self.registration.showNotification(data.title, options)
-//   );
-// });
-
-// self.addEventListener('notificationclick', (event) => {
-//   event.notification.close();
-
-//   const handleNotificationClick = async () => {
-//     // Get all clients (windows, tabs, PWA instances)
-//     const clientList = await self.clients.matchAll({ 
-//       type: 'window',
-//       includeUncontrolled: true 
-//     });
-
-//     // Try to find and focus any existing app window
-//     for (const client of clientList) {
-//       // Check if this is our app (matches the origin)
-//       if (client.url.startsWith(self.location.origin)) {
-//         console.log('Found existing app window:', client.url);
-        
-//         // Try to focus the window
-//         if ('focus' in client) {
-//           try {
-//             await client.focus();
-//             console.log('Successfully focused existing window');
-            
-//             // Send message to the focused window
-//             client.postMessage({
-//               type: 'NOTIFICATION_CLICK',
-//               url: event.notification.data.url,
-//               timestamp: Date.now()
-//             });
-//             return;
-//           } catch (error) {
-//             console.log('Failed to focus window, trying to navigate:', error);
-//           }
-//         }
-        
-//         // If focus fails, try to navigate the existing window
-//         try {
-//           const url = event.notification.data.url || '/';
-//           await client.navigate(url);
-//           console.log('Navigated existing window to:', url);
-//           return;
-//         } catch (error) {
-//           console.log('Failed to navigate window:', error);
-//         }
-//       }
-//     }
-    
-//     // If no existing window found or couldn't focus/navigate, open a new one
-//     if (self.clients.openWindow) {
-//       const url = event.notification.data.url || '/';
-//       console.log('Opening new app window:', url);
-      
-//       // For mobile PWAs, we need to ensure the PWA opens properly
-//       const newWindow = await self.clients.openWindow(url);
-      
-//       if (newWindow) {
-//         console.log('New window opened successfully');
-//       } else {
-//         console.log('Failed to open new window - might be blocked by browser');
-//         // Fallback: try to open in current tab if PWA window fails
-//         self.clients.openWindow(url);
-//       }
-//     }
-//   };
-
-//   if (event.action === 'open') {
-//     event.waitUntil(handleNotificationClick());
-//   } else if (event.action === 'close') {
-//     // Just close the notification, do nothing else
-//     console.log('Notification closed by user');
-//   } else {
-//     // Default click behavior (when clicking the notification body)
-//     event.waitUntil(handleNotificationClick());
-//   }
-// });
-
-// self.addEventListener('notificationclose', (event) => {
-//   console.log('Notification closed', event.notification);
-// });
-
-
-// Service Worker for Push Notifications
+// Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installed');
-  self.skipWaiting();
+  console.log('Service Worker installing and caching static assets');
+  
+  event.waitUntil(
+    caches.open(STATIC_CACHE)
+      .then((cache) => {
+        console.log('Caching static assets');
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => {
+        console.log('Static assets cached successfully');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('Failed to cache static assets:', error);
+      })
+  );
 });
 
+// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activated');
-  event.waitUntil(self.clients.claim());
+  
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE && cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+      console.log('Claiming clients');
+      return self.clients.claim();
+    })
+  );
 });
 
+// Fetch event - handle network requests with offline fallback
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests and external URLs
+  if (request.method !== 'GET' || !url.origin.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // Handle API routes
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(handleApiRequest(event));
+    return;
+  }
+
+  // Handle page navigation and static assets
+  event.respondWith(handlePageRequest(event));
+});
+
+// Strategy for API requests
+async function handleApiRequest(event) {
+  const { request } = event;
+  
+  try {
+    // Try network first for API calls
+    const networkResponse = await fetch(request);
+    
+    // Cache successful GET responses for offline use
+    if (networkResponse.ok && request.method === 'GET') {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('API request failed, trying cache:', request.url);
+    
+    // For offline scenario, try to serve from cache
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // For auth API, return a fallback response
+    if (request.url.includes('/api/auth')) {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Offline mode - authentication unavailable'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Return generic offline response for other APIs
+    return new Response(JSON.stringify({
+      error: 'You are offline. Please check your connection.'
+    }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+// Strategy for page requests
+async function handlePageRequest(event) {
+  const { request } = event;
+  
+  try {
+    // Network first strategy for pages
+    const networkResponse = await fetch(request);
+    
+    // Cache successful responses
+    if (networkResponse.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('Network failed, serving from cache:', request.url);
+    
+    // Try to serve from cache
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // For navigation requests, try to serve cached pages
+    if (request.mode === 'navigate') {
+      // Try to serve the cached version of the requested page
+      const cachedPage = await caches.match(request);
+      if (cachedPage) {
+        return cachedPage;
+      }
+      
+      // If no cached page found, try to serve the home page
+      const cachedHome = await caches.match('/');
+      if (cachedHome) {
+        return cachedHome;
+      }
+      
+      return createOfflineResponse();
+    }
+    
+    // For other requests, return a generic offline response
+    return createOfflineResponse();
+  }
+}
+
+// Create a generic offline response
+function createOfflineResponse() {
+  return new Response(
+    JSON.stringify({
+      error: 'You are offline. Some features may be unavailable.'
+    }),
+    {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    }
+  );
+}
+
+// Background sync for offline actions
+self.addEventListener('sync', (event) => {
+  console.log('Background sync triggered:', event.tag);
+  
+  if (event.tag === 'background-sync') {
+    event.waitUntil(doBackgroundSync());
+  }
+});
+
+async function doBackgroundSync() {
+  console.log('Performing background sync');
+  
+  // Here you could implement syncing of offline actions
+  // For example, syncing task changes made while offline
+  try {
+    const cache = await caches.open(DYNAMIC_CACHE);
+    // Implement your sync logic here
+    console.log('Background sync completed');
+  } catch (error) {
+    console.error('Background sync failed:', error);
+  }
+}
+
+// Push notification handling
 self.addEventListener('push', (event) => {
   if (!event.data) return;
 
@@ -142,10 +222,6 @@ self.addEventListener('push', (event) => {
       url: data.url || '/'
     },
     actions: [
-      // {
-      //   action: 'open',
-      //   title: 'Open App'
-      // },
       {
         action: 'close',
         title: 'Close This Notification'
@@ -158,160 +234,70 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// self.addEventListener('notificationclick', (event) => {
-//   console.log('=== NOTIFICATION CLICK DEBUG ===');
-//   console.log('Action:', event.action);
-//   console.log('Notification URL:', event.notification.data.url);
+// Notification click handling
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event.action);
   
-//   event.notification.close();
-
-//   const handleNotificationClick = async () => {
-//     const url = event.notification.data.url || '/';
-//     const absoluteUrl = new URL(url, self.location.origin).href;
-    
-//     console.log('Processing notification click for URL:', absoluteUrl);
-
-//     try {
-//       // Get all window clients
-//       const clientList = await self.clients.matchAll({ 
-//         type: 'window',
-//         includeUncontrolled: true 
-//       });
-
-//       console.log('Found clients:', clientList.length);
-//       clientList.forEach((client, index) => {
-//         console.log(`Client ${index}:`, client.url, 'focused:', client.focused);
-//       });
-
-//       // Try to find an existing client from our origin
-//       let existingClient = null;
-//       for (const client of clientList) {
-//         if (client.url.startsWith(self.location.origin)) {
-//           existingClient = client;
-//           console.log('Found existing app client:', client.url);
-//           break;
-//         }
-//       }
-
-//       if (existingClient) {
-//         // Strategy 1: Try to focus existing client
-//         if ('focus' in existingClient) {
-//           try {
-//             await existingClient.focus();
-//             console.log('Successfully focused existing window');
-            
-//             // Send message to navigate to the target URL
-//             existingClient.postMessage({
-//               type: 'NOTIFICATION_CLICK',
-//               url: absoluteUrl,
-//               timestamp: Date.now()
-//             });
-//             return;
-//           } catch (focusError) {
-//             console.log('Focus failed, trying navigate:', focusError);
-//           }
-//         }
-
-//         // Strategy 2: Try to navigate existing client (from internet code)
-//         if ('navigate' in existingClient) {
-//           try {
-//             await existingClient.navigate(absoluteUrl);
-//             console.log('Successfully navigated existing window');
-            
-//             if ('focus' in existingClient) {
-//               await existingClient.focus();
-//             }
-//             return;
-//           } catch (navigateError) {
-//             console.log('Navigate failed:', navigateError);
-//           }
-//         }
-//       }
-
-//       // Strategy 3: No suitable existing client found, open new window
-//       console.log('Opening new window for URL:', absoluteUrl);
-      
-//       if (self.clients.openWindow) {
-//         // Mobile PWA specific: ensure we're opening the PWA properly
-//         const newWindow = await self.clients.openWindow(absoluteUrl);
-        
-//         if (!newWindow) {
-//           console.log('First openWindow attempt returned null, retrying...');
-//           // Mobile browsers sometimes block the first attempt
-//           // Wait a bit and try again
-//           await new Promise(resolve => setTimeout(resolve, 300));
-//           const retryWindow = await self.clients.openWindow(absoluteUrl);
-          
-//           if (!retryWindow) {
-//             console.error('All openWindow attempts failed');
-//             // Final fallback - this might trigger browser's popup blocker notice
-//             self.clients.openWindow(absoluteUrl).catch(finalError => {
-//               console.error('Final openWindow attempt failed:', finalError);
-//             });
-//           }
-//         } else {
-//           console.log('New window opened successfully');
-//         }
-//       }
-      
-//     } catch (error) {
-//       console.error('Error in notification click handler:', error);
-      
-//       // Ultimate fallback
-//       try {
-//         await self.clients.openWindow(absoluteUrl);
-//       } catch (finalError) {
-//         console.error('All navigation attempts failed:', finalError);
-//       }
-//     }
-//   };
-
-//   // Handle different notification actions
-//   if (event.action === 'open' || !event.action) {
-//     console.log('Executing open action');
-//     event.waitUntil(handleNotificationClick());
-//   } else if (event.action === 'close') {
-//     console.log('Notification closed by user action');
-//     // Just close the notification, do nothing else
-//   }
-// });
-
-self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  // If close button is clicked, do nothing and return immediately
+  // If close button is clicked, do nothing
   if (event.action === 'close') {
     console.log('Close button clicked - doing nothing');
     return;
   }
 
-  // This looks to see if the current window is already open and
-  // focuses if it is
+  // Focus existing window or open new one
   event.waitUntil(
-    clients
-      .matchAll({
-        type: "window",
-      })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === "/" && "focus" in client)
-            return client.focus();
+    clients.matchAll({
+      type: 'window',
+    }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
         }
-        if (clients.openWindow) return clients.openWindow("/");
-      })
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });
-
 
 self.addEventListener('notificationclose', (event) => {
   console.log('Notification closed', event.notification);
 });
 
-// Optional: Handle messages from the client
+// Handle messages from the client
 self.addEventListener('message', (event) => {
   console.log('Service Worker received message:', event.data);
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+  
+  // Handle cache updates from client
+  if (event.data && event.data.type === 'CACHE_NEW_PAGE') {
+    const { url } = event.data;
+    caches.open(DYNAMIC_CACHE).then(cache => {
+      fetch(url).then(response => {
+        if (response.ok) {
+          cache.put(url, response);
+        }
+      });
+    });
+  }
 });
+
+// Periodic sync for background updates (if supported)
+if ('periodicSync' in self.registration) {
+  self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'content-update') {
+      event.waitUntil(updateContent());
+    }
+  });
+}
+
+async function updateContent() {
+  console.log('Periodic sync: updating content');
+  // Implement content update logic here
+}

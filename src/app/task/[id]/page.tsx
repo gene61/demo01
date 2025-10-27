@@ -43,6 +43,7 @@ export default function TaskDetail() {
   const [showDeadlineModal, setShowDeadlineModal] = useState(false);
   const [deadlineInput, setDeadlineInput] = useState('');
   const [forceSteps, setForceSteps] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,6 +64,22 @@ export default function TaskDetail() {
       }
     }
   }, [params.id]);
+
+  // Check online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    setIsOnline(navigator.onLine);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Auto-scroll chat history to bottom when new messages are added
   useEffect(() => {
@@ -387,6 +404,19 @@ export default function TaskDetail() {
               </button>
             )}
           </div>
+          
+          {/* Offline Warning */}
+          {!isOnline && (
+            <div className="mb-4 px-4 py-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg text-sm">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <span>AI Assistant unavailable offline - you can still view existing steps and chat history</span>
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-4">
             {/* Chat History */}
             {task.aiChatHistory.length > 0 && (
@@ -425,18 +455,19 @@ export default function TaskDetail() {
                   type="text"
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
-                  placeholder="Ask GoalBee to create steps..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={isOnline ? "Ask GoalBee to create steps..." : "AI Assistant unavailable offline"}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !isGeneratingSteps) {
+                    if (e.key === 'Enter' && !isGeneratingSteps && isOnline) {
                       generateStepsWithAI();
                     }
                   }}
+                  disabled={!isOnline}
                 />
                 <div className="flex gap-2">
                   <button
                     onClick={generateStepsWithAI}
-                    disabled={isGeneratingSteps || !aiInput.trim()}
+                    disabled={isGeneratingSteps || !aiInput.trim() || !isOnline}
                     className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                   >
                     {isGeneratingSteps ? 'Generating...' : 'Chat'}
@@ -449,9 +480,10 @@ export default function TaskDetail() {
                   id="forceSteps"
                   checked={forceSteps}
                   onChange={(e) => setForceSteps(e.target.checked)}
-                  className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isOnline}
                 />
-                <label htmlFor="forceSteps" className="text-xs text-gray-700">
+                <label htmlFor="forceSteps" className={`text-xs ${!isOnline ? 'text-gray-400' : 'text-gray-700'}`}>
                   Always generate steps (best effort with available info)
                 </label>
               </div>
