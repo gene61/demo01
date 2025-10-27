@@ -8,7 +8,7 @@
   "crons": [
     {
       "path": "/api/notifications/check-deadlines",
-      "schedule": "0 0 * * *"
+      "schedule": "0 1 * * *"
     }
   ],
   "functions": {
