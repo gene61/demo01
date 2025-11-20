@@ -43,6 +43,7 @@ export default function Home() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [isTaskListVisible, setIsTaskListVisible] = useState(true);
 
   // Check if already authenticated on component mount
   useEffect(() => {
@@ -505,6 +506,204 @@ export default function Home() {
   const completedCount = todos.filter(todo => todo.completed).length;
   const totalCount = todos.length;
 
+  // Calendar functionality
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Get dates with tasks due
+  const getDatesWithTasks = () => {
+    const datesWithTasks = new Set();
+    todos.forEach(todo => {
+      if (todo.deadline && !todo.completed) {
+        const deadlineDate = new Date(todo.deadline);
+        const dateKey = deadlineDate.toDateString();
+        datesWithTasks.add(dateKey);
+      }
+    });
+    return datesWithTasks;
+  };
+
+  // Get tasks for a specific date
+  const getTasksForDate = (date: Date) => {
+    const dateKey = date.toDateString();
+    return todos.filter(todo => 
+      todo.deadline && 
+      !todo.completed && 
+      new Date(todo.deadline).toDateString() === dateKey
+    );
+  };
+
+  // Calendar component
+  const Calendar = () => {
+    const datesWithTasks = getDatesWithTasks();
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    
+    const getDaysInMonth = (date: Date) => {
+      return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    };
+
+    const getFirstDayOfMonth = (date: Date) => {
+      return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    };
+
+    const navigateMonth = (direction: 'prev' | 'next') => {
+      const newMonth = new Date(currentMonth);
+      if (direction === 'prev') {
+        newMonth.setMonth(newMonth.getMonth() - 1);
+      } else {
+        newMonth.setMonth(newMonth.getMonth() + 1);
+      }
+      setCurrentMonth(newMonth);
+      setSelectedDate(null); // Clear selected date when changing months
+    };
+
+    const daysInMonth = getDaysInMonth(currentMonth);
+    const firstDay = getFirstDayOfMonth(currentMonth);
+    const today = new Date();
+    
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    const tasksForSelectedDate = selectedDate ? getTasksForDate(selectedDate) : [];
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6 relative overflow-hidden">
+        {/* Background Image with opacity */}
+        <div className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-30" style={{ backgroundImage: 'url(/image.png)' }}></div>
+        
+        {/* Content */}
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navigateMonth('prev')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors z-20 relative"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h3 className="text-lg font-semibold text-gray-800 z-20 relative">
+              {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            </h3>
+            <button
+              onClick={() => navigateMonth('next')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors z-20 relative"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 mb-2 relative z-10">
+            {dayNames.map(day => (
+              <div key={day} className="text-center text-sm font-medium text-gray-600 py-1">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 relative z-10">
+            {Array.from({ length: firstDay }).map((_, index) => (
+              <div key={`empty-${index}`} className="h-10"></div>
+            ))}
+            
+            {Array.from({ length: daysInMonth }).map((_, index) => {
+              const day = index + 1;
+              const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+              const dateKey = date.toDateString();
+              const hasTask = datesWithTasks.has(dateKey);
+              const isToday = date.toDateString() === today.toDateString();
+              const isSelected = selectedDate && selectedDate.toDateString() === dateKey;
+              
+              return (
+                <div
+                  key={day}
+                  className={`h-10 flex items-center justify-center relative ${
+                    isToday ? 'bg-blue-100 border border-blue-300' : 
+                    isSelected ? 'bg-blue-200 border border-blue-400' : 
+                    'hover:bg-blue-100'
+                  } rounded-lg transition-colors cursor-pointer`}
+                  onClick={() => {
+                    if (hasTask) {
+                      if (selectedDate && selectedDate.toDateString() === dateKey) {
+                        setSelectedDate(null); // Deselect if already selected
+                      } else {
+                        setSelectedDate(date); // Select this date
+                      }
+                    }
+                  }}
+                >
+                  <span className={`text-sm ${
+                    isToday ? 'font-bold text-blue-700' : 
+                    isSelected ? 'font-bold text-blue-800' : 
+                    'text-gray-800'
+                  }`}>
+                    {day}
+                  </span>
+                  {hasTask && (
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Task list section - always visible at bottom of calendar */}
+          {selectedDate && tasksForSelectedDate.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="text-center mb-3">
+                <h4 className="text-sm font-semibold text-gray-700">
+                  Tasks due on {selectedDate.toLocaleDateString('en-AU', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long' 
+                  })}
+                </h4>
+              </div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {tasksForSelectedDate.map((task) => (
+                  <button
+                    key={task.id}
+                    onClick={() => router.push(`/task/${task.id}`)}
+                    className="w-full text-left text-sm text-gray-700 py-2 px-3 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-3 h-3 bg-red-400 rounded-full mt-1 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <span className="break-words">{task.text}</span>
+                        {task.deadline && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            ⏰ {formatPerthTime(new Date(task.deadline))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Calendar Legend */}
+          <div className="mt-4 pt-3 border-t border-gray-200">
+            <div className="text-center text-xs text-gray-500">
+              <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                  <span className="text-gray-400">Date with Task Due date</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen animated-gradient flex items-center justify-center py-8 px-4">
@@ -590,8 +789,8 @@ export default function Home() {
 
         {/* Header with Todo List Title */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">GoalBee 🐝</h1>
-          <p className="text-gray-600">Stay organized and productive</p>
+          {/* <h1 className="text-4xl font-bold text-gray-800 mb-2">GoalBee 🐝</h1> */}
+          {/* <p className="text-gray-600">Stay organized and productive</p> */}
           
           {/* Offline Indicator */}
           {!isOnline && (
@@ -623,6 +822,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Calendar */}
+        <Calendar />
 
         {/* Add Todo Form */}
         <div className="bg-white rounded-lg shadow-md p-4 mb-6">
@@ -658,15 +860,38 @@ export default function Home() {
         </div>
 
 
-        {/* Todo List */}
+        {/* Todo List - Scrollable at very bottom */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {todos.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <div className="text-6xl mb-4">📝</div>
-              <p>No tasks yet. Add one above!</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
+          {/* Task List Header with Collapse Button */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-semibold text-gray-800">All Tasks ({todos.length})</h3>
+            <button
+              onClick={() => setIsTaskListVisible(!isTaskListVisible)}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              title={isTaskListVisible ? "Hide task list" : "Show task list"}
+            >
+              {isTaskListVisible ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              )}
+            </button>
+          </div>
+          
+          {/* Task List Content */}
+          {isTaskListVisible && (
+            <div className="max-h-96 overflow-y-auto">
+              {todos.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <div className="text-6xl mb-4">📝</div>
+                  <p>No tasks yet. Add one above!</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
               {todos.map((todo) => (
                 <div
                   key={todo.id}
@@ -742,6 +967,8 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+                </div>
+              )}
             </div>
           )}
         </div>

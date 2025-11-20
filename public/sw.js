@@ -7,8 +7,7 @@ const DYNAMIC_CACHE = 'goalbee-dynamic-v1.2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/icon-192x192.svg',
-  '/icon-512x512.svg',
+  '/image.png',
   '/favicon.ico',
   '/sw.js',
   '/task/',
@@ -215,8 +214,8 @@ self.addEventListener('push', (event) => {
   const data = event.data.json();
   const options = {
     body: data.body,
-    icon: '/icon-192x192.svg',
-    badge: '/icon-192x192.svg',
+    icon: '/image.png',
+    badge: '/image.png',
     vibrate: [200, 100, 200],
     data: {
       url: data.url || '/'
