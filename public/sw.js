@@ -9,9 +9,12 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/image.png',
   '/favicon.ico',
-  '/sw.js',
-  '/task/',
-  '/task/[id]/'
+  '/sw.js'
+];
+
+// Dynamic routes that should be cached when visited
+const DYNAMIC_ROUTES = [
+  '/task/'
 ];
 
 // API routes that should work offline (read-only)
@@ -128,6 +131,7 @@ async function handleApiRequest(event) {
 // Strategy for page requests
 async function handlePageRequest(event) {
   const { request } = event;
+  const url = new URL(request.url);
   
   try {
     // Network first strategy for pages
@@ -155,6 +159,20 @@ async function handlePageRequest(event) {
       const cachedPage = await caches.match(request);
       if (cachedPage) {
         return cachedPage;
+      }
+      
+      // For task pages, try to serve a cached task page template
+      if (url.pathname.startsWith('/task/')) {
+        // Try to find any cached task page
+        const cache = await caches.open(DYNAMIC_CACHE);
+        const keys = await cache.keys();
+        const taskPage = keys.find(key => key.url.includes('/task/'));
+        if (taskPage) {
+          const cachedTaskPage = await cache.match(taskPage);
+          if (cachedTaskPage) {
+            return cachedTaskPage;
+          }
+        }
       }
       
       // If no cached page found, try to serve the home page
