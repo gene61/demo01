@@ -569,13 +569,10 @@ export default function Home() {
 
     const tasksForSelectedDate = selectedDate ? getTasksForDate(selectedDate) : [];
 
-    return (
-      <div className="bg-white rounded-lg shadow-md p-4 mb-6 relative overflow-hidden">
-        {/* Background Image with opacity */}
-        <div className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-30" style={{ backgroundImage: 'url(/image.png)' }}></div>
-        
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 mb-6">
         {/* Content */}
-        <div className="relative z-10">
+        <div>
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigateMonth('prev')}
@@ -787,10 +784,16 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Header with Todo List Title */}
+        {/* Header with Todo List Title and Image */}
         <div className="text-center mb-8">
-          {/* <h1 className="text-4xl font-bold text-gray-800 mb-2">GoalBee 🐝</h1> */}
-          {/* <p className="text-gray-600">Stay organized and productive</p> */}
+          {/* Main Image at the top */}
+          <div className="flex justify-center">
+            <img 
+              src="/image1.gif" 
+              alt="Todo List" 
+              className="w-64 h-64"
+            />
+          </div>
           
           {/* Offline Indicator */}
           {!isOnline && (
@@ -806,19 +809,19 @@ export default function Home() {
         </div>
 
         {/* Stats */}
-        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg p-6 mb-6 text-white">
           <div className="flex justify-between items-center">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{totalCount}</div>
-              <div className="text-sm text-gray-500">Total</div>
+              <div className="text-3xl font-bold text-white">{totalCount}</div>
+              <div className="text-sm text-blue-100">Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{completedCount}</div>
-              <div className="text-sm text-gray-500">Completed</div>
+              <div className="text-3xl font-bold text-white">{completedCount}</div>
+              <div className="text-sm text-blue-100">Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{totalCount - completedCount}</div>
-              <div className="text-sm text-gray-500">Pending</div>
+              <div className="text-3xl font-bold text-white">{totalCount - completedCount}</div>
+              <div className="text-sm text-blue-100">Pending</div>
             </div>
           </div>
         </div>
@@ -827,32 +830,32 @@ export default function Home() {
         <Calendar />
 
         {/* Add Todo Form */}
-        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-          <div className="space-y-3">
-            <div className="flex gap-2">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg p-6 mb-6">
+          <div className="space-y-4">
+            <div className="flex gap-3">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={isOnline ? "Add a task and enter deadline below..." : "Task management unavailable offline"}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder={isOnline ? "✨ Add a new task..." : "Task management unavailable offline"}
+                className="flex-1 px-4 py-3 bg-white/90 backdrop-blur-sm border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 disabled={!isOnline}
               />
               <button
                 onClick={addTodo}
                 disabled={!isOnline}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-sm sm:text-base whitespace-nowrap min-w-[60px] disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all transform hover:scale-105 text-sm sm:text-base whitespace-nowrap min-w-[80px] disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                Add
+                Add ✨
               </button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <input
                 type="datetime-local"
                 value={deadlineInput}
                 onChange={(e) => setDeadlineInput(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                className="flex-1 px-4 py-3 bg-white/90 backdrop-blur-sm border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
                 placeholder="Set deadline (optional)"
               />
             </div>
@@ -861,21 +864,21 @@ export default function Home() {
 
 
         {/* Todo List - Scrollable at very bottom */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg overflow-hidden">
           {/* Task List Header with Collapse Button */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-            <h3 className="text-lg font-semibold text-gray-800">All Tasks ({todos.length})</h3>
+          <div className="flex items-center justify-between p-6 border-b border-blue-300/30 bg-blue-500/20 backdrop-blur-sm">
+            <h3 className="text-xl font-bold text-white">🎯 All Tasks ({todos.length})</h3>
             <button
               onClick={() => setIsTaskListVisible(!isTaskListVisible)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              className="p-3 text-white hover:text-blue-100 hover:bg-blue-600/30 rounded-xl transition-all transform hover:scale-110"
               title={isTaskListVisible ? "Hide task list" : "Show task list"}
             >
               {isTaskListVisible ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               )}
@@ -884,50 +887,51 @@ export default function Home() {
           
           {/* Task List Content */}
           {isTaskListVisible && (
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto bg-white/90 backdrop-blur-sm">
               {todos.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-6xl mb-4">📝</div>
-                  <p>No tasks yet. Add one above!</p>
+                <div className="text-center py-16 text-blue-700">
+                  <div className="text-8xl mb-6">🌟</div>
+                  <p className="text-lg font-semibold">No tasks yet. Add one above!</p>
+                  <p className="text-blue-600 mt-2">Start organizing your day!</p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-blue-100/50">
               {todos.map((todo) => (
                 <div
                   key={todo.id}
-                  className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-4 p-5 hover:bg-blue-50/80 transition-all duration-300"
                 >
                   <input
                     type="checkbox"
                     checked={todo.completed}
                     onChange={() => toggleTodo(todo.id)}
-                    className="w-5 h-5 text-blue-500 rounded focus:ring-blue-500"
+                    className="w-6 h-6 text-blue-600 rounded-full focus:ring-2 focus:ring-blue-400 border-2 border-blue-300"
                   />
                   <div className="flex-1">
                     <span
-                      className={`block ${
+                      className={`block text-lg font-medium ${
                         todo.completed
-                          ? 'line-through text-gray-400'
-                          : 'text-gray-700'
+                          ? 'line-through text-blue-400'
+                          : 'text-blue-800'
                       }`}
                     >
                       {todo.text}
                     </span>
                     {todo.deadline && (
-                      <div className={`text-xs mt-1 ${
+                      <div className={`text-sm mt-2 font-medium ${
                         new Date(todo.deadline) < new Date() && !todo.completed 
-                          ? 'text-red-500 font-medium' 
-                          : 'text-gray-500'
+                          ? 'text-red-500 bg-red-50 px-3 py-1 rounded-full' 
+                          : 'text-blue-600 bg-blue-50 px-3 py-1 rounded-full'
                       }`}>
                         ⏰ {formatPerthTime(new Date(todo.deadline))}
                         {new Date(todo.deadline) < new Date() && !todo.completed && ' (Overdue)'}
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-10">
+                  <div className="flex gap-4">
                     <button
                       onClick={() => router.push(`/task/${todo.id}`)}
-                      className="text-green-500 hover:text-green-700 p-1 rounded-full hover:bg-green-50 transition-colors"
+                      className="p-3 bg-gradient-to-r from-blue-400 to-purple-500 text-white rounded-xl hover:from-blue-500 hover:to-purple-600 transition-all transform hover:scale-110 shadow-md"
                       title="View Details"
                     >
                       <svg
@@ -947,7 +951,7 @@ export default function Home() {
                     <button
                       onClick={() => deleteTodo(todo.id)}
                       disabled={!isOnline}
-                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                      className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-110 shadow-md disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed disabled:hover:scale-100"
                       title={isOnline ? "Delete task" : "Delete unavailable offline"}
                     >
                       <svg
