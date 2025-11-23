@@ -832,7 +832,7 @@ export default function Home() {
         {/* Add Todo Form */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg p-6 mb-6">
           <div className="space-y-4">
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
                   value={inputValue}
