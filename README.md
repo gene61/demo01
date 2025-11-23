@@ -1,5 +1,5 @@
 <img width="156" height="133" alt="image" src="https://github.com/user-attachments/assets/43145f4c-de06-4a3a-9b8a-83ffc80f5608" />
-<br><br><br>
+<br>
 https://demo01-six.vercel.app/
 <br><br><br>
 
@@ -7,10 +7,13 @@ https://demo01-six.vercel.app/
 This is a PWA app that is powered by AI to recommend steps for your day-to-day tasks.
 
 app main page:<br>
-![image](https://github.com/user-attachments/assets/931e6ae2-959a-423f-b0f5-e3967effa49b)
+<img width="383" height="869" alt="image" src="https://github.com/user-attachments/assets/83fa05b4-3150-48a3-bcac-6f030d180df4" />
 <br><br><br>
 task details page overview:<br>
 ![image](https://github.com/user-attachments/assets/8217c29d-757d-4e6d-8baf-57d27f5cba99)
+<br><br><br>
+<img width="441" height="869" alt="image" src="https://github.com/user-attachments/assets/2d704ce4-8073-4fa2-a464-451a1e8f15c6" />
+
 <br><br><br>
 task details page, chat with GoalBee🐝:<br>
 ![image](https://github.com/user-attachments/assets/6abc4694-eb3e-4a23-930a-98cd1fff742f)
