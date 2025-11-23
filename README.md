@@ -1,4 +1,7 @@
 # GoalBee🐝            https://demo01-six.vercel.app/
+<img width="156" height="133" alt="image" src="https://github.com/user-attachments/assets/43145f4c-de06-4a3a-9b8a-83ffc80f5608" />
+<br><br><br>
+
 This is a PWA app that is powered by AI to recommend steps for your day-to-day tasks.
 
 app main page:<br>
