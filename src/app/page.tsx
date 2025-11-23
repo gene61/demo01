@@ -832,7 +832,7 @@ export default function Home() {
         {/* Add Todo Form */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg p-6 mb-6">
           <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-3">
                 <input
                   type="text"
                   value={inputValue}
@@ -842,13 +842,6 @@ export default function Home() {
                   className="flex-1 px-4 py-3 bg-blue-100 border border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                   disabled={!isOnline}
                 />
-              <button
-                onClick={addTodo}
-                disabled={!isOnline}
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all transform hover:scale-105 text-sm sm:text-base whitespace-nowrap min-w-[80px] disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                Add ✨
-              </button>
             </div>
             <div className="flex gap-3">
               <input
@@ -858,6 +851,15 @@ export default function Home() {
                 className="flex-1 px-4 py-3 bg-blue-100 border border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
                 placeholder="Set deadline (optional)"
               />
+            </div>
+            <div className="flex justify-center">
+              <button
+                onClick={addTodo}
+                disabled={!isOnline}
+                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all transform hover:scale-105 text-sm sm:text-base whitespace-nowrap min-w-[120px] disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                Add Task ✨
+              </button>
             </div>
           </div>
         </div>
