@@ -12,7 +12,7 @@ app main page:<br>
 task details page overview:<br>
 ![image](https://github.com/user-attachments/assets/8217c29d-757d-4e6d-8baf-57d27f5cba99)
 <br><br><br>
-<img width="441" height="869" alt="image" src="https://github.com/user-attachments/assets/2d704ce4-8073-4fa2-a464-451a1e8f15c6" />
+<img width="387" height="868" alt="image" src="https://github.com/user-attachments/assets/1d6db6ce-ebd9-458e-96f2-1cc1f30e2ef8" />
 
 <br><br><br>
 task details page, chat with GoalBee🐝:<br>
