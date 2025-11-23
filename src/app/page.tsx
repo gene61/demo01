@@ -717,7 +717,7 @@ export default function Home() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-blue-100 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
               </div>
@@ -785,20 +785,19 @@ export default function Home() {
         </div>
 
         {/* Header with Todo List Title and Image */}
-        <div className="text-center mb-8">
-          {/* Main Image at the top */}
-          <div className="flex justify-center">
+        <div className="text-center relative">
+          {/* Main Image at the top - positioned to overlap */}
+          <div className="flex justify-center relative z-10 -mt-16 -mb-16">
             <img 
               src="/image1.gif" 
               alt="Todo List" 
-              className="w-32 h-32
-              "
+              className="w-64 h-64"
             />
           </div>
           
           {/* Offline Indicator */}
           {!isOnline && (
-            <div className="mt-2 px-4 py-2 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg text-sm">
+            <div className="mt-2 px-4 py-2 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg text-sm relative z-20">
               <div className="flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -840,7 +839,7 @@ export default function Home() {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder={isOnline ? "✨ Add a new task..." : "Task management unavailable offline"}
-                  className="flex-1 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-blue-100 border border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                   disabled={!isOnline}
                 />
               <button
@@ -856,7 +855,7 @@ export default function Home() {
                 type="datetime-local"
                 value={deadlineInput}
                 onChange={(e) => setDeadlineInput(e.target.value)}
-                className="flex-1 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
+                className="flex-1 px-4 py-3 bg-blue-100 border border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
                 placeholder="Set deadline (optional)"
               />
             </div>
