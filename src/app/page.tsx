@@ -738,7 +738,7 @@ export default function Home() {
     <div className="min-h-screen animated-gradient py-8 px-4">
       <div className="max-w-md mx-auto">
         {/* Control Buttons at Very Top */}
-        <div className="flex justify-center items-center gap-2 mb-6">
+        <div className="flex justify-center items-center gap-2 mb-6 relative z-20">
           {/* Get Endpoint Button */}
           <button
             onClick={getCurrentEndpoint}
