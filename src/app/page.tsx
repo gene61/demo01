@@ -791,7 +791,8 @@ export default function Home() {
             <img 
               src="/image1.gif" 
               alt="Todo List" 
-              className="w-64 h-64"
+              className="w-32 h-32
+              "
             />
           </div>
           
